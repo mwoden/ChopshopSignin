@@ -9,10 +9,10 @@ namespace ChopshopSignin
 {
     class ViewModel : INotifyPropertyChanged
     {
-        public string LastScan
+        public string ScanStatus
         {
             get { lock (syncObject) { return m_LastScan; } }
-            set { lock (syncObject) { m_LastScan = value; FirePropertyChanged("LastScan"); } }
+            set { lock (syncObject) { m_LastScan = value; FirePropertyChanged("ScanStatus"); } }
         }
 
         public string CurrentTimeString
@@ -26,10 +26,24 @@ namespace ChopshopSignin
             set { lock (syncObject) { m_CurrentTime = value; FirePropertyChanged("CurrentTime"); FirePropertyChanged("CurrentTimeString"); } }
         }
 
-        public ObservableCollection<string> StudentsIn
+        public IEnumerable<string> CheckedInList
         {
-            get {lock (syncObject){ return m_StudentsIn; }}
-            set { lock (syncObject) { m_StudentsIn = value; FirePropertyChanged("StudentsIn"); } }
+            set
+            {
+                CheckedInDisplayList = new ObservableCollection<string>(value);
+                FirePropertyChanged("StudentListHeader");
+            }
+        }
+
+        public ObservableCollection<string> CheckedInDisplayList
+        {
+            get { lock (syncObject) { return m_StudentsIn; } }
+            private set { lock (syncObject) { m_StudentsIn = value; FirePropertyChanged("CheckedInDisplayList"); } }
+        }
+
+        public string StudentListHeader
+        {
+            get { lock (syncObject) { return string.Format("Students Signed In ({0})", CheckedInDisplayList.Count()); } }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -39,7 +53,6 @@ namespace ChopshopSignin
         private string m_LastScan = string.Empty;
         private DateTime m_CurrentTime = DateTime.Now;
         private ObservableCollection<string> m_StudentsIn = new ObservableCollection<string>();
-
 
         private void FirePropertyChanged(string propertyName)
         {
