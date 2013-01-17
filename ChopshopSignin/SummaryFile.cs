@@ -37,8 +37,6 @@ namespace ChopshopSignin
                 var outputPath = System.IO.Path.Combine(outputFolder, outputFile);
 
                 var fileData = week.Lines.OrderBy(x => x.FullName).Select(x => x.Line).ToArray();
-                //var fileData = week.OrderBy(x => x.FullName).Select(x => x.Line).ToArray();
-                //var fileData = week.OrderBy(x => x.FullName).Reverse().SelectMany(x => x.SignInTimes).ToArray();
 
                 var temp = GetCsvHeader().Concat(fileData).ToArray();
                 System.IO.File.WriteAllLines(outputPath, temp);
