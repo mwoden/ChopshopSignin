@@ -8,38 +8,41 @@ namespace ChopshopSignin
     class WeekSummary
     {
         public int Week { get; private set; }
+        public string FullName { get; private set; }
         public IEnumerable<string> SignInTimes { get; private set; }
 
-        public WeekSummary(int weekNumber, IEnumerable<string> times)
+        public WeekSummary(int weekNumber, string name, IEnumerable<string> times)
         {
             Week = weekNumber;
+            FullName = name;
             SignInTimes = times;
         }
     }
 
     class SummaryFile
     {
-        public static void CreateAllFiles(string outputFolder, DateTime kickoff, IEnumerable<Person> people)
+        public static void CreateAllFiles(string outputFolder, DateTime kickoff, IEnumerable<Person> people, Person.RoleType role)
         {
-            // generate a single person's scan data for each week..
-            var test = people.First().GetWeekSummaries(kickoff);
-            //var peopleWeeks = people.Select(x => new { Week = x. });
+            var weekData = people.Where(x => x.Role == role)
+                                 .Select(x => x.GetWeekSummaries(kickoff))
+                                 .SelectMany(x => x)
+                                 .Select(x => x.SignInTimes.Select(y => new { FullName = x.FullName, Week = x.Week, Line = y }))
+                                 .SelectMany(x => x)
+                                 .GroupBy(x => x.Week)
+                                 .Select(x => new { Week = x.Key, Lines = x });
 
-
-            var temp2 = test.Select(x => new { FileName = string.Format("Week {0}.csv", x.Week), Data = x.SignInTimes.ToArray() }).ToList();
-
-            foreach (var file in temp2)
+            foreach (var week in weekData.OrderBy(_x => _x.Week))
             {
-                var outputPath = System.IO.Path.Combine(outputFolder, file.FileName);
-                System.IO.File.WriteAllLines(outputPath, file.Data);
+                var outputFile = string.Format("{0} - Week {1}.csv", role.ToString(), week.Week);
+                var outputPath = System.IO.Path.Combine(outputFolder, outputFile);
+
+                var fileData = week.Lines.OrderBy(x => x.FullName).Select(x => x.Line).ToArray();
+                //var fileData = week.OrderBy(x => x.FullName).Select(x => x.Line).ToArray();
+                //var fileData = week.OrderBy(x => x.FullName).Reverse().SelectMany(x => x.SignInTimes).ToArray();
+
+                var temp = GetCsvHeader().Concat(fileData).ToArray();
+                System.IO.File.WriteAllLines(outputPath, temp);
             }
-
-
-
-
-
-
-
 
 
             //
@@ -67,6 +70,14 @@ namespace ChopshopSignin
             //}
         }
 
+        private static IEnumerable<string> GetCsvHeader()
+        {
+            return new[]
+                {
+                    ",,Saturday,,Sunday,,Monday,,Tuesday,,Wednesday,,Thursday,,Friday",
+                    ",,In,Out,In,Out,In,Out,In,Out,In,Out,In,Out,In,Out"
+                };
+        }
 
         private static string GenerateWeekCsvFile(IEnumerable<Scan> weekData)
         {

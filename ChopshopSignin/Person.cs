@@ -134,14 +134,14 @@ namespace ChopshopSignin
                                   .ToArray();
 
             var maxEntries = weeks.Max(x => x.WeekScans.First().Value.Count());
-            var rows = Enumerable.Range(0, maxEntries).Select(_ => new List<string>()).ToArray();
+            //var rows = Enumerable.Range(0, maxEntries).Select(_ => new List<string>()).ToArray();
 
             var weekSummaries = new List<WeekSummary>();
 
             foreach (var week in weeks)
             {
-
                 var weekMaxEntries = week.WeekScans.Values.Max(x => x.Count());
+                var rows = Enumerable.Range(0, weekMaxEntries).Select(_ => new List<string>()).ToArray();
 
                 foreach (var index in Enumerable.Range(0, weekMaxEntries))
                 {
@@ -151,10 +151,9 @@ namespace ChopshopSignin
                         rows[index].Add(t.GetCsvString());
                     }
                 }
-
-                var temp = new WeekSummary(week.Week, rows.Where(x => x.Any()).Select(x => string.Join(",", new[] { FullName }.Concat(x))).ToArray());
-
+                var temp = new WeekSummary(week.Week, FullName, rows.Where(x => x.Any()).Select(x => string.Join(",", new[] { FullName }.Concat(x))).ToArray());
                 weekSummaries.Add(temp);
+                //}
             }
 
             //var temp = weekSummaries.Where(x => x.).ToList();

@@ -150,7 +150,8 @@ namespace ChopshopSignin
             clockTimer.Enabled = false;
 
             Person.Save(People.Values, XmlDataFile);
-            SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values);
+            //SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Student);
+            SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Mentor);
         }
 
         private SignInOutResult SignAllOut()
