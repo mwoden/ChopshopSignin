@@ -17,8 +17,11 @@ namespace ChopshopSignin
         {
             get
             {
-                if (Timestamps.Count() == 0) return Scan.LocationType.Out;
-                return Timestamps.Last().Direction;
+                var today = Timestamps.Where(x => x.ScanTime.Date == DateTime.Today);
+                if (today.Count() == 0)
+                    return Scan.LocationType.Out;
+
+                return today.Last().Direction;
             }
         }
         public RoleType Role { get; private set; }
@@ -65,9 +68,9 @@ namespace ChopshopSignin
             RoleType role = Person.RoleType.Student;
 
             // Check for a mentor scan
-            if (scanData.ToUpperInvariant().Contains('-'))
+            if (scanData.ToUpperInvariant().Contains(':'))
             {
-                scanData = scanData.Split('-').Last().Trim();
+                scanData = scanData.Split(':').Last().Trim();
                 role = Person.RoleType.Mentor;
             }
 
@@ -94,7 +97,7 @@ namespace ChopshopSignin
             return string.Format("{0} : {1} : {2}", FullName, Role.ToString(), CurrentLocation.ToString());
         }
 
-        public SignInOutResult Sign(bool signingIn)
+        public SignInOutResult SignInOrOut(bool signingIn)
         {
             if (signingIn)
                 return SignIn();
@@ -118,9 +121,46 @@ namespace ChopshopSignin
 
         public static IEnumerable<Person> Load(string filePath)
         {
-            return XElement.Load(filePath).Elements().Select(x => new Person(x));
+            if (System.IO.File.Exists(filePath))
+                return XElement.Load(filePath).Elements().Select(x => new Person(x));
+
+            return Enumerable.Empty<Person>();
         }
 
+        public IEnumerable<WeekSummary> GetWeekSummaries(DateTime kickoffData)
+        {
+            var weeks = Timestamps.GroupBy(x => (((x.ScanTime.Date - kickoffData).Days) / 7) + 1)
+                                  .Select(x => new { Week = x.Key, WeekScans = SignInPair.GetWeekInOutPairs(x) })
+                                  .ToArray();
+
+            var maxEntries = weeks.Max(x => x.WeekScans.First().Value.Count());
+            var rows = Enumerable.Range(0, maxEntries).Select(_ => new List<string>()).ToArray();
+
+            var weekSummaries = new List<WeekSummary>();
+
+            foreach (var week in weeks)
+            {
+
+                var weekMaxEntries = week.WeekScans.Values.Max(x => x.Count());
+
+                foreach (var index in Enumerable.Range(0, weekMaxEntries))
+                {
+                    foreach (var day in FirstWeek)
+                    {
+                        var t = week.WeekScans[day][index];
+                        rows[index].Add(t.GetCsvString());
+                    }
+                }
+
+                var temp = new WeekSummary(week.Week, rows.Where(x => x.Any()).Select(x => string.Join(",", new[] { FullName }.Concat(x))).ToArray());
+
+                weekSummaries.Add(temp);
+            }
+
+            //var temp = weekSummaries.Where(x => x.).ToList();
+
+            return weekSummaries;
+        }
 
         private SignInOutResult SignIn()
         {
@@ -128,7 +168,7 @@ namespace ChopshopSignin
             {
                 Timestamps.Add(new Scan(true));
 
-                var statusMessage = FullName + " IN at " + Timestamps.Last().ScanTime.ToLongTimeString();
+                var statusMessage = FullName + " in at " + Timestamps.Last().ScanTime.ToLongTimeString();
                 return new SignInOutResult(true, statusMessage);
             }
             else
@@ -144,7 +184,7 @@ namespace ChopshopSignin
             {
                 Timestamps.Add(new Scan(false));
 
-                var statusMessage = FullName + " OUT at " + Timestamps.Last().ScanTime.ToLongTimeString();
+                var statusMessage = FullName + " out at " + Timestamps.Last().ScanTime.ToLongTimeString();
                 return new SignInOutResult(true, statusMessage);
             }
             else
@@ -152,6 +192,92 @@ namespace ChopshopSignin
                 var statusMessage = "You are already signed out, scan \"IN\" instead";
                 return new SignInOutResult(false, statusMessage);
             }
+        }
+
+        public static readonly DayOfWeek[] FirstWeek = new[] 
+        {
+            DayOfWeek.Saturday,
+            DayOfWeek.Sunday,
+            DayOfWeek.Monday,
+            DayOfWeek.Tuesday,
+            DayOfWeek.Wednesday,
+            DayOfWeek.Thursday,
+            DayOfWeek.Friday
+        };
+    }
+
+    /// <summary>
+    /// Holds the in/out scan pair
+    /// </summary>
+    class SignInPair
+    {
+        public DateTime? In { get; private set; }
+        public DateTime? Out { get; private set; }
+
+        private SignInPair() { }
+
+        public SignInPair(IEnumerable<Scan> timeStamps)
+        {
+            var scanCount = timeStamps.Count();
+            System.Diagnostics.Debug.Assert(scanCount == 1 || scanCount == 2);
+
+            In = timeStamps.First().ScanTime;
+            if (scanCount == 2)
+                Out = timeStamps.Last().ScanTime;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("{0} - {1}",
+                In == null ? string.Empty : ((DateTime)In).ToShortTimeString(),
+                Out == null ? string.Empty : ((DateTime)Out).ToShortTimeString());
+        }
+
+        public string GetCsvString()
+        {
+            return string.Format("{0},{1}",
+                In == null ? string.Empty : ((DateTime)In).ToShortTimeString(),
+                Out == null ? string.Empty : ((DateTime)Out).ToShortTimeString());
+        }
+
+        public static IDictionary<DayOfWeek, SignInPair[]> GetWeekInOutPairs(IEnumerable<Scan> timeStamps)
+        {
+            System.Diagnostics.Debug.Assert(timeStamps.First().Direction == Scan.LocationType.In);
+
+            var scans = timeStamps.GroupBy(x => x.ScanTime.DayOfWeek)
+                                  .Select(x => new { Day = x.Key, Pairs = GetDayPairs(x) })
+                                  .ToArray();
+
+            var daysMissing = FirstWeek.Except(scans.Select(x => x.Day)).Select(x => new { Day = x, Pairs = Enumerable.Empty<SignInPair>().ToArray() }).ToArray();
+            var max = scans.Max(x => x.Pairs.Count());
+
+            return scans.Concat(daysMissing).ToDictionary(x => x.Day, x => x.Pairs.Concat(Enumerable.Repeat<SignInPair>(new SignInPair(), max))
+                                                                                 .Take(max)
+                                                                                 .ToArray());
+            //    return timeStamps.GroupBy(x => x.ScanTime.DayOfWeek)
+            //                     .Select(x => new { Day = x.Key, Pairs = GetDayPairs(x) })
+            //                     .ToDictionary(x => x.Day, x => x.Pairs.ToArray());
+        }
+
+        public static readonly DayOfWeek[] FirstWeek = new[] 
+        {
+            DayOfWeek.Saturday,
+            DayOfWeek.Sunday,
+            DayOfWeek.Monday,
+            DayOfWeek.Tuesday,
+            DayOfWeek.Wednesday,
+            DayOfWeek.Thursday,
+            DayOfWeek.Friday
+        };
+
+        private static SignInPair[] GetDayPairs(IEnumerable<Scan> times)
+        {
+            System.Diagnostics.Debug.Assert(times.First().Direction == Scan.LocationType.In);
+
+            return Enumerable.Range(0, times.Count())
+                             .GroupBy(x => x / 2, x => times.ElementAt(x))
+                             .Select(x => new SignInPair(x))
+                             .ToArray();
         }
     }
 }

@@ -7,25 +7,25 @@
         Closed="Window_Closed"
         WindowState="Maximized"
         WindowStyle="None">
-
-    <!--
-    WindowState="Maximized"
-        WindowStyle="None">
-    -->
-    <!--
-     SizeToContent="WidthAndHeight">       
-    -->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="4*"/>
+            <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <GroupBox Grid.Column="1" TextElement.FontSize="18">
             <GroupBox.Header>
-                <TextBlock FontSize="22">Signed In</TextBlock>
+                <TextBlock FontSize="22" Text="{Binding Path=StudentListHeader}"/>
             </GroupBox.Header>
-            <ItemsControl ItemsSource="{Binding Path=StudentsIn}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+            <ItemsControl ItemsSource="{Binding Path=StudentsCheckedInDisplayList}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+        </GroupBox>
+
+        <GroupBox Grid.Column="2" TextElement.FontSize="18">
+            <GroupBox.Header>
+                <TextBlock FontSize="22" Text="{Binding Path=MentorListHeader}"/>
+            </GroupBox.Header>
+            <ItemsControl ItemsSource="{Binding Path=MentorsCheckedInDisplayList}" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
         </GroupBox>
 
         <Grid Grid.Column="0">
@@ -37,10 +37,8 @@
             <TextBlock Grid.Row="0" Text="{Binding CurrentTimeString}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Center"
                    FontWeight="Bold" FontSize="132"/>
 
-            <TextBlock Grid.Row="1" Text="{Binding Path=LastScan}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Center"
+            <TextBlock Grid.Row="1" Text="{Binding Path=ScanStatus}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Center"
                    FontWeight="Bold" FontSize="60"/>
-
         </Grid>
-
     </Grid>
 </Window>

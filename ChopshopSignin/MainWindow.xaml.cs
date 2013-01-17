@@ -40,6 +40,9 @@ namespace ChopshopSignin
         public MainWindow()
         {
             InitializeComponent();
+
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
             DataContext = viewModel;
 
             clockTimer.Elapsed += ClockTick;
@@ -47,6 +50,11 @@ namespace ChopshopSignin
 
             OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             XmlDataFile = System.IO.Path.Combine(OutputFolder, XmlDataFileName);
+        }
+
+        void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
         }
 
         void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
@@ -80,15 +88,12 @@ namespace ChopshopSignin
                     case ScanCommand.Out:
                         if (currentScannedPerson != null)
                         {
-                            var result = currentScannedPerson.Sign(command == ScanCommand.In);
+                            var result = currentScannedPerson.SignInOrOut(command == ScanCommand.In);
                             if (result.OperationSucceeded)
                             {
                                 currentScannedPerson = null;
 
-                                viewModel.CheckedInList = People.Values.Where(x => x.CurrentLocation == Scan.LocationType.In)
-                                                                       .Where(x => x.Role == Person.RoleType.Student)
-                                                                       .Select(x => x.FullName)
-                                                                       .OrderBy(x => x);
+                                viewModel.UpdateCheckedInLists(People.Values);
 
                                 Person.Save(People.Values, XmlDataFile);
                             }
@@ -108,12 +113,8 @@ namespace ChopshopSignin
                         var allOutResult = SignAllOut();
                         if (allOutResult.OperationSucceeded)
                             viewModel.ScanStatus = allOutResult.Status;
-
-                        viewModel.CheckedInList = People.Values.Where(x => x.CurrentLocation == Scan.LocationType.In)
-                                                               .Where(x => x.Role == Person.RoleType.Student)
-                                                               .Select(x => x.FullName)
-                                                               .OrderBy(x => x);
-
+                        
+                        viewModel.UpdateCheckedInLists(People.Values);
                         break;
 
                     // Non-command scan, store the data in the current scan
@@ -141,10 +142,7 @@ namespace ChopshopSignin
         {
             People = Person.Load(XmlDataFile).ToDictionary(x => x.FullName, x => x);
 
-            viewModel.CheckedInList = People.Values.Where(x => x.CurrentLocation == Scan.LocationType.In)
-                                                   .Where(x => x.Role == Person.RoleType.Student)
-                                                   .Select(x => x.FullName)
-                                                   .OrderBy(x => x);
+            viewModel.UpdateCheckedInLists(People.Values);
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -152,7 +150,7 @@ namespace ChopshopSignin
             clockTimer.Enabled = false;
 
             Person.Save(People.Values, XmlDataFile);
-            //SummaryFile.CreateAllFiles(OutputFolder, Kickoff, scans);
+            SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values);
         }
 
         private SignInOutResult SignAllOut()
@@ -161,7 +159,7 @@ namespace ChopshopSignin
             var status = string.Format("Signed out all {0} remaining at {1}", remaining.Count(), DateTime.Now.ToShortTimeString());
 
             foreach (var person in remaining)
-                person.Sign(false);
+                person.SignInOrOut(false);
 
             return new SignInOutResult(true, status);
         }
@@ -173,6 +171,15 @@ namespace ChopshopSignin
                 return ScanCommand.NoCommmand;
 
             return result;
+        }
+
+        private void Student_Filter(object sender, FilterEventArgs e)
+        {
+            e.Accepted = false;
+
+            var person = e.Item as Person;
+            if (person != null && person.Role == Person.RoleType.Student)
+                e.Accepted = true;
         }
     }
 }
