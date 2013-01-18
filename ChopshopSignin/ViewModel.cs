@@ -72,7 +72,7 @@ namespace ChopshopSignin
         {
             get { lock (syncObject) { return string.Format("Mentors Signed In ({0})", MentorsCheckedInDisplayList.Count()); } }
         }
-        
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         private object syncObject = new object();

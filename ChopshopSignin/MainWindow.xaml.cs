@@ -1,4 +1,6 @@
-﻿using System;
+﻿#undef NO_SAVE
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -113,7 +115,7 @@ namespace ChopshopSignin
                         var allOutResult = SignAllOut();
                         if (allOutResult.OperationSucceeded)
                             viewModel.ScanStatus = allOutResult.Status;
-                        
+
                         viewModel.UpdateCheckedInLists(People.Values);
                         break;
 

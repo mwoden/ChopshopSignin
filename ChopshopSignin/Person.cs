@@ -68,9 +68,11 @@ namespace ChopshopSignin
             RoleType role = Person.RoleType.Student;
 
             // Check for a mentor scan
-            if (scanData.ToUpperInvariant().Contains(':'))
+            if (scanData.ToUpperInvariant().StartsWith(MentorId))
             {
-                scanData = scanData.Split(':').Last().Trim();
+                scanData = scanData.Substring(MentorId.Length).Trim();
+                //scanData = scanData.Split(':').Last().Trim();
+
                 role = Person.RoleType.Mentor;
             }
 
@@ -133,17 +135,14 @@ namespace ChopshopSignin
                                   .Select(x => new { Week = x.Key, WeekScans = SignInPair.GetWeekInOutPairs(x) })
                                   .ToArray();
 
-            var maxEntries = weeks.Max(x => x.WeekScans.First().Value.Count());
-            //var rows = Enumerable.Range(0, maxEntries).Select(_ => new List<string>()).ToArray();
-
             var weekSummaries = new List<WeekSummary>();
 
             foreach (var week in weeks)
             {
-                var weekMaxEntries = week.WeekScans.Values.Max(x => x.Count());
-                var rows = Enumerable.Range(0, weekMaxEntries).Select(_ => new List<string>()).ToArray();
+                var maxEntries = week.WeekScans.Values.Max(x => x.Count());
+                var rows = Enumerable.Range(0, maxEntries).Select(_ => new List<string>()).ToArray();
 
-                foreach (var index in Enumerable.Range(0, weekMaxEntries))
+                foreach (var index in Enumerable.Range(0, maxEntries))
                 {
                     foreach (var day in FirstWeek)
                     {
@@ -153,10 +152,7 @@ namespace ChopshopSignin
                 }
                 var temp = new WeekSummary(week.Week, FullName, rows.Where(x => x.Any()).Select(x => string.Join(",", new[] { FullName }.Concat(x))).ToArray());
                 weekSummaries.Add(temp);
-                //}
             }
-
-            //var temp = weekSummaries.Where(x => x.).ToList();
 
             return weekSummaries;
         }
@@ -203,6 +199,8 @@ namespace ChopshopSignin
             DayOfWeek.Thursday,
             DayOfWeek.Friday
         };
+
+        private const string MentorId = "MENTOR  ";
     }
 
     /// <summary>
