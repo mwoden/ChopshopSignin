@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
 
 namespace ChopshopSignin
 {
@@ -72,12 +73,10 @@ namespace ChopshopSignin
             RoleType role = Person.RoleType.Student;
 
             // Check for a mentor scan
-            if (scanData.ToUpperInvariant().StartsWith(MentorId))
+            if (IsMentor(scanData))
             {
-                scanData = scanData.Substring(MentorId.Length).Trim();
-                //scanData = scanData.Split(':').Last().Trim();
-
                 role = Person.RoleType.Mentor;
+                scanData = GetMentorName(scanData);
             }
 
             return new Person(scanData.Split(',').First(), scanData.Split(',').Last(), role);
@@ -248,6 +247,27 @@ namespace ChopshopSignin
         }
 
         /// <summary>
+        /// Detects a mentor scan
+        /// </summary>
+        private static bool IsMentor(string rawScanData)
+        {
+            return Regex.IsMatch(rawScanData, MentorIdPattern, RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>
+        /// Returns the mentor name only, stripping out the mentor ID string
+        /// </summary>
+        private static string GetMentorName(string rawScanData)
+        {
+            var match = Regex.Match(rawScanData, MentorIdPattern, RegexOptions.IgnoreCase);
+
+            if (!match.Success)
+                throw new ArgumentException("should have a mentor prefix but doesn't", "rawScanData");
+
+            return rawScanData.Substring(match.Value.Length);
+        }
+
+        /// <summary>
         /// Contains the week defintion, by FIRST season standards
         /// </summary>
         public static readonly DayOfWeek[] FirstWeek = new[] 
@@ -262,8 +282,8 @@ namespace ChopshopSignin
         };
 
         /// <summary>
-        /// This string is prefixed to a person who is a mentor
+        /// The regex pattern to detect a mentor scan
         /// </summary>
-        private const string MentorId = "MENTOR  ";
+        private const string MentorIdPattern = @"\Amentor[^a-z]+";
     }
 }
