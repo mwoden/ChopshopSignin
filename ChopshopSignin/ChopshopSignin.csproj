@@ -58,10 +58,10 @@
     <Compile Include="Person.cs" />
     <Compile Include="Scan.cs" />
     <Compile Include="SignInOutResult.cs" />
+    <Compile Include="SignInPair.cs" />
     <Compile Include="StudentWeekEntry.cs" />
     <Compile Include="SummaryFile.cs" />
     <Compile Include="ViewModel.cs" />
-    <Compile Include="WeekRecord.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
