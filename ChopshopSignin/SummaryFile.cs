@@ -5,20 +5,6 @@ using System.Text;
 
 namespace ChopshopSignin
 {
-    class WeekSummary
-    {
-        public int Week { get; private set; }
-        public string FullName { get; private set; }
-        public IEnumerable<string> SignInTimes { get; private set; }
-
-        public WeekSummary(int weekNumber, string name, IEnumerable<string> times)
-        {
-            Week = weekNumber;
-            FullName = name;
-            SignInTimes = times;
-        }
-    }
-
     class SummaryFile
     {
         public static void CreateAllFiles(string outputFolder, DateTime kickoff, IEnumerable<Person> people, Person.RoleType role)

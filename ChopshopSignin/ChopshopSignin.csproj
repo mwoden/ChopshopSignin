@@ -59,9 +59,9 @@
     <Compile Include="Scan.cs" />
     <Compile Include="SignInOutResult.cs" />
     <Compile Include="SignInPair.cs" />
-    <Compile Include="StudentWeekEntry.cs" />
     <Compile Include="SummaryFile.cs" />
     <Compile Include="ViewModel.cs" />
+    <Compile Include="WeekSummary.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

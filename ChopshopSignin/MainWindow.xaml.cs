@@ -30,14 +30,29 @@ namespace ChopshopSignin
         private readonly ViewModel viewModel = new ViewModel();
         private readonly System.Timers.Timer clockTimer = new System.Timers.Timer(100);
         private readonly DateTime Kickoff = new DateTime(2013, 1, 5);
+
         private readonly TimeSpan ScanInOutWindow = new TimeSpan(0, 0, 10);
+        private readonly TimeSpan ResetScanDataTime = new TimeSpan(0, 0, 3);
+
         private readonly string OutputFolder;
         private readonly string XmlDataFile;
 
-        private DateTime? resetScanTime;
+        private readonly object syncObject = new object();
+
         private Dictionary<string, Person> People = new Dictionary<string, Person>();
-        private Person currentScannedPerson;
+
+        // The data that hsa been entered to the app so far, and needs a '\r' terminator
         private StringBuilder scanDataInProgress = new StringBuilder();
+
+        // The current person selected by the last scan
+        private Person currentScannedPerson;
+
+        // Time that indicates when the current selected person will be reset
+        private DateTime? resetCurrentPerson;
+
+        // Time that indicagtes when to clear the scan data if garbage has been entered
+        private DateTime? resetCurrentScan;
+
 
         public MainWindow()
         {
@@ -62,85 +77,110 @@ namespace ChopshopSignin
         void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
         {
             viewModel.CurrentTime = DateTime.Now;
-            if (currentScannedPerson != null && resetScanTime != null)
+
+            if (currentScannedPerson != null && resetCurrentPerson != null)
             {
-                if (resetScanTime < DateTime.Now)
+                if (resetCurrentPerson < DateTime.Now)
                 {
                     currentScannedPerson = null;
-                    resetScanTime = null;
+                    resetCurrentPerson = null;
                     viewModel.ScanStatus = "You waited too long, please re-scan your name";
                 }
             }
+
+            if (resetCurrentScan != null)
+                if (resetCurrentScan < DateTime.Now)
+                    lock (syncObject)
+                    {
+                        resetCurrentScan = null;
+                        scanDataInProgress = new StringBuilder();
+                    }
         }
 
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
         {
-            scanDataInProgress.Append(e.Text);
+            if (resetCurrentScan == null)
+                resetCurrentScan = DateTime.Now + ResetScanDataTime;
 
-            if (e.Text == "\r")
+            lock (syncObject)
             {
-                var scanData = scanDataInProgress.ToString().Trim();
-                scanDataInProgress = new StringBuilder();
+                scanDataInProgress.Append(e.Text);
 
-                var command = ParseCommand(scanData);
-
-                switch (command)
+                if (e.Text == "\r")
                 {
-                    case ScanCommand.In:
-                    case ScanCommand.Out:
-                        if (currentScannedPerson != null)
-                        {
-                            var result = currentScannedPerson.SignInOrOut(command == ScanCommand.In);
-                            if (result.OperationSucceeded)
+                    // Extract the current scan data
+                    var scanData = scanDataInProgress.ToString().Trim();
+                    scanDataInProgress = new StringBuilder();
+
+                    // Disable reseting the current scan data
+                    resetCurrentScan = null;
+
+                    // Determine if a command was scanned
+                    var command = ParseCommand(scanData);
+
+                    switch (command)
+                    {
+                        case ScanCommand.In:
+                        case ScanCommand.Out:
+                            // If a person was already scanned (selected)
+                            if (currentScannedPerson != null)
                             {
-                                currentScannedPerson = null;
+                                // Check the sign-in result
+                                var result = currentScannedPerson.SignInOrOut(command == ScanCommand.In);
+                                if (result.OperationSucceeded)
+                                {
+                                    currentScannedPerson = null;
+
+                                    // Update the display of who's signed in
+                                    viewModel.UpdateCheckedInLists(People.Values);
+
+                                    // Save the current list
+                                    Person.Save(People.Values, XmlDataFile);
+                                }
+
+                                // If they scanned a command, reset the timeout window
+                                if (resetCurrentPerson != null)
+                                    resetCurrentPerson = DateTime.Now + ScanInOutWindow;
+
+                                viewModel.ScanStatus = result.Status;
+                            }
+                            else
+                                viewModel.ScanStatus = "Please scan your name first";
+                            break;
+
+                        case ScanCommand.AllOutNow:
+                            // Sign out all signed in users at the current time
+                            if (ConfirmAllOutCommand())
+                            {
+                                var allOutResult = SignAllOut();
+                                if (allOutResult.OperationSucceeded)
+                                    viewModel.ScanStatus = allOutResult.Status;
 
                                 viewModel.UpdateCheckedInLists(People.Values);
-
-                                Person.Save(People.Values, XmlDataFile);
                             }
+                            else
+                                viewModel.ScanStatus = "Sign everyone out command cancelled";
+                            break;
 
-                            // If they scanned a command, reset the timeout window
-                            if (resetScanTime != null)
-                                resetScanTime = DateTime.Now + ScanInOutWindow;
+                        // Non-command scan, store the data in the current scan
+                        case ScanCommand.NoCommmand:
+                        default:
+                            var newPerson = Person.Create(scanData);
+                        
+                            // If the scan data fits the pattern of a person scan
+                            if (newPerson != null)
+                            {
+                                var name = newPerson.FullName;
+                                if (!People.ContainsKey(name))
+                                    People[name] = newPerson;
 
-                            viewModel.ScanStatus = result.Status;
-                        }
-                        else
-                            viewModel.ScanStatus = "Please scan your name first";
-                        break;
+                                currentScannedPerson = People[name];
 
-                    case ScanCommand.AllOutNow:
-                        // Sign out all signed in users at the current time
-                        if (ConfirmAllOutCommand())
-                        {
-                            var allOutResult = SignAllOut();
-                            if (allOutResult.OperationSucceeded)
-                                viewModel.ScanStatus = allOutResult.Status;
-
-                            viewModel.UpdateCheckedInLists(People.Values);
-                        }
-                        else
-                            viewModel.ScanStatus = "Sign everyone out command cancelled";
-                        break;
-
-                    // Non-command scan, store the data in the current scan
-                    case ScanCommand.NoCommmand:
-                    // Default is do nothing
-                    default:
-                        var newPerson = Person.Create(scanData);
-                        if (newPerson != null)
-                        {
-                            var name = newPerson.FullName;
-                            if (!People.ContainsKey(name))
-                                People[name] = newPerson;
-
-                            currentScannedPerson = People[name];
-
-                            viewModel.ScanStatus = currentScannedPerson.FirstName + ", sign in or out";
-                            resetScanTime = DateTime.Now + ScanInOutWindow;
-                        }
-                        break;
+                                viewModel.ScanStatus = currentScannedPerson.FirstName + ", sign in or out";
+                                resetCurrentPerson = DateTime.Now + ScanInOutWindow;
+                            }
+                            break;
+                    }
                 }
             }
         }

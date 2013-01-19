@@ -13,6 +13,10 @@ namespace ChopshopSignin
         public string FirstName { get; private set; }
         public string LastName { get; private set; }
         public string FullName { get { return LastName + ", " + FirstName; } }
+
+        /// <summary>
+        /// Returns the most recent location from today's timestamps
+        /// </summary>
         public Scan.LocationType CurrentLocation
         {
             get
@@ -99,6 +103,11 @@ namespace ChopshopSignin
             return string.Format("{0} : {1} : {2}", FullName, Role.ToString(), CurrentLocation.ToString());
         }
 
+        /// <summary>
+        /// Signs a person in or out, and returns an corresponding sign in/out result
+        /// </summary>
+        /// <param name="signingIn">If true, indicates the person is signing in</param>
+        /// <returns>The result of the operatoin</returns>
         public SignInOutResult SignInOrOut(bool signingIn)
         {
             if (signingIn)
@@ -116,21 +125,42 @@ namespace ChopshopSignin
                     new XElement("Scans", Timestamps.Select(x => x.ToXml())));
         }
 
+        /// <summary>
+        /// Saves a list of people to the specified files
+        /// Only people with at least 1 timestamp will be saved,
+        /// sorted by Student/Mentor, then by name (last name first)
+        /// </summary>
         public static void Save(IEnumerable<Person> people, string filePath)
         {
-            new XElement("SignInList", people.OrderBy(x => x.Role).ThenBy(x => x.FullName).Select(x => x.ToXml())).Save(filePath);
+            new XElement("SignInList", people.Where(x => x.Timestamps.Any())
+                                             .OrderBy(x => x.Role)
+                                             .ThenBy(x => x.FullName)
+                                             .Select(x => x.ToXml())).Save(filePath);
         }
 
+        /// <summary>
+        /// Load all the people from the file
+        /// This will make a backup copy in the 'Backup' folder first
+        /// </summary>
         public static IEnumerable<Person> Load(string filePath)
         {
             if (System.IO.File.Exists(filePath))
+            {
+                BackupDataFile(filePath);
                 return XElement.Load(filePath).Elements().Select(x => new Person(x));
+            }
 
             return Enumerable.Empty<Person>();
         }
 
+        /// <summary>
+        /// Generates a set of WeekSummary objects to create the csv summary files
+        /// </summary>
+        /// <param name="kickoffData"></param>
+        /// <returns></returns>
         public IEnumerable<WeekSummary> GetWeekSummaries(DateTime kickoffData)
         {
+            // Get the person's timestamps and group them by week
             var weeks = Timestamps.GroupBy(x => (((x.ScanTime.Date - kickoffData).Days) / 7) + 1)
                                   .Select(x => new { Week = x.Key, WeekScans = SignInPair.GetWeekInOutPairs(x) })
                                   .ToArray();
@@ -150,20 +180,23 @@ namespace ChopshopSignin
                         rows[index].Add(t.GetCsvString());
                     }
                 }
-                var temp = new WeekSummary(week.Week, FullName, rows.Where(x => x.Any()).Select(x => string.Join(",", new[] { FullName }.Concat(x))).ToArray());
-                weekSummaries.Add(temp);
+                var weekSum = new WeekSummary(week.Week, FullName, rows.Where(x => x.Any()).Select(x => string.Join(",", new[] { FullName }.Concat(x))).ToArray());
+                weekSummaries.Add(weekSum);
             }
 
             return weekSummaries;
         }
 
+        /// <summary>
+        /// Signs a person in, and returns an corresponding sign in/out result
+        /// </summary>
         private SignInOutResult SignIn()
         {
             if (CurrentLocation == Scan.LocationType.Out)
             {
                 Timestamps.Add(new Scan(true));
 
-                var statusMessage = FullName + " in at " + Timestamps.Last().ScanTime.ToLongTimeString();
+                var statusMessage = string.Format("{0} {1} in at {2}", FirstName, LastName, Timestamps.Last().ScanTime.ToShortDateString());
                 return new SignInOutResult(true, statusMessage);
             }
             else
@@ -173,13 +206,17 @@ namespace ChopshopSignin
             }
         }
 
+        /// <summary>
+        /// Signs a person out, and returns an corresponding sign in/out result
+        /// </summary>
+        /// <returns></returns>
         private SignInOutResult SignOut()
         {
             if (CurrentLocation == Scan.LocationType.In)
             {
                 Timestamps.Add(new Scan(false));
 
-                var statusMessage = FullName + " out at " + Timestamps.Last().ScanTime.ToLongTimeString();
+                var statusMessage = string.Format("{0} {1} out at {2}", FirstName, LastName, Timestamps.Last().ScanTime.ToShortDateString());
                 return new SignInOutResult(true, statusMessage);
             }
             else
@@ -189,6 +226,30 @@ namespace ChopshopSignin
             }
         }
 
+        /// <summary>
+        /// Make a backup copy of the specified file a 'Backup' subdirectory
+        /// The backup file will be prefixed with yyyy-MM-dd HH_mm_ss
+        /// </summary>
+        private static void BackupDataFile(string originalFilePath)
+        {
+            if (System.IO.File.Exists(originalFilePath))
+            {
+                var baseFolder = System.IO.Path.GetDirectoryName(originalFilePath);
+                var backupFolder = System.IO.Path.Combine(baseFolder, "Backup");
+
+                if (!System.IO.Directory.Exists(backupFolder))
+                    System.IO.Directory.CreateDirectory(backupFolder);
+
+                var backupFile = DateTime.Now.ToString("yyyy-MM-dd HH_mm_ss") + " " + System.IO.Path.GetFileName(originalFilePath);
+                var backupFilePath = System.IO.Path.Combine(backupFolder, backupFile);
+
+                System.IO.File.Copy(originalFilePath, backupFilePath);
+            }
+        }
+
+        /// <summary>
+        /// Contains the week defintion, by FIRST season standards
+        /// </summary>
         public static readonly DayOfWeek[] FirstWeek = new[] 
         {
             DayOfWeek.Saturday,
@@ -200,6 +261,9 @@ namespace ChopshopSignin
             DayOfWeek.Friday
         };
 
+        /// <summary>
+        /// This string is prefixed to a person who is a mentor
+        /// </summary>
         private const string MentorId = "MENTOR  ";
     }
 }
