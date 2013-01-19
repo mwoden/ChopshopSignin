@@ -26,21 +26,26 @@ namespace ChopshopSignin
                 Out = timeStamps.Last().ScanTime;
             else
             {
-                // Except Sat & Sun, default out time is 9 PM
-                switch (timeStamps.First().ScanTime.DayOfWeek)
+                // If 'in' date is before today, then generate a default 'out' time for the same day
+                // So don't generate a default out for today's date
+                if (((DateTime)In).Date < DateTime.Today)
                 {
-                    case DayOfWeek.Saturday:
-                    case DayOfWeek.Sunday:
-                        Out = ((DateTime)In).Date.AddHours(18);
-                        break;
+                    // Except Sat & Sun, default out time is 9 PM
+                    switch (timeStamps.First().ScanTime.DayOfWeek)
+                    {
+                        case DayOfWeek.Saturday:
+                        case DayOfWeek.Sunday:
+                            Out = ((DateTime)In).Date.AddHours(18);
+                            break;
 
-                    case DayOfWeek.Monday:
-                    case DayOfWeek.Tuesday:
-                    case DayOfWeek.Wednesday:
-                    case DayOfWeek.Thursday:
-                    case DayOfWeek.Friday:
-                        Out = ((DateTime)In).Date.AddHours(21);
-                        break;
+                        case DayOfWeek.Monday:
+                        case DayOfWeek.Tuesday:
+                        case DayOfWeek.Wednesday:
+                        case DayOfWeek.Thursday:
+                        case DayOfWeek.Friday:
+                            Out = ((DateTime)In).Date.AddHours(21);
+                            break;
+                    }
                 }
             }
         }

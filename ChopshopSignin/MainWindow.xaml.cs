@@ -112,11 +112,16 @@ namespace ChopshopSignin
 
                     case ScanCommand.AllOutNow:
                         // Sign out all signed in users at the current time
-                        var allOutResult = SignAllOut();
-                        if (allOutResult.OperationSucceeded)
-                            viewModel.ScanStatus = allOutResult.Status;
+                        if (ConfirmAllOutCommand())
+                        {
+                            var allOutResult = SignAllOut();
+                            if (allOutResult.OperationSucceeded)
+                                viewModel.ScanStatus = allOutResult.Status;
 
-                        viewModel.UpdateCheckedInLists(People.Values);
+                            viewModel.UpdateCheckedInLists(People.Values);
+                        }
+                        else
+                            viewModel.ScanStatus = "Sign everyone out command cancelled";
                         break;
 
                     // Non-command scan, store the data in the current scan
@@ -183,6 +188,15 @@ namespace ChopshopSignin
             var person = e.Item as Person;
             if (person != null && person.Role == Person.RoleType.Student)
                 e.Accepted = true;
+        }
+
+        private bool ConfirmAllOutCommand()
+        {
+            var message = "You are about to sign out all currently signed-in people" + Environment.NewLine +
+                          "Please select 'Yes' to sign everyone out";
+            var result = MessageBox.Show(message, "Confirm signing all out", MessageBoxButton.YesNo,
+                                            MessageBoxImage.Warning, MessageBoxResult.No);
+            return result == MessageBoxResult.Yes;
         }
     }
 }
