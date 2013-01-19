@@ -110,15 +110,15 @@ namespace ChopshopSignin
         public XElement ToXml()
         {
             return new XElement("Person",
-                    new XAttribute("firstName", FirstName),
                     new XAttribute("lastName", LastName),
+                    new XAttribute("firstName", FirstName),
                     new XAttribute("role", Role),
                     new XElement("Scans", Timestamps.Select(x => x.ToXml())));
         }
 
         public static void Save(IEnumerable<Person> people, string filePath)
         {
-            new XElement("SignInList", people.Select(x => x.ToXml())).Save(filePath);
+            new XElement("SignInList", people.OrderBy(x => x.Role).ThenBy(x => x.FullName).Select(x => x.ToXml())).Save(filePath);
         }
 
         public static IEnumerable<Person> Load(string filePath)
@@ -269,6 +269,9 @@ namespace ChopshopSignin
 
         private static SignInPair[] GetDayPairs(IEnumerable<Scan> times)
         {
+            if (times.First().Direction != Scan.LocationType.In)
+                System.Diagnostics.Debugger.Break();
+
             System.Diagnostics.Debug.Assert(times.First().Direction == Scan.LocationType.In);
 
             return Enumerable.Range(0, times.Count())
