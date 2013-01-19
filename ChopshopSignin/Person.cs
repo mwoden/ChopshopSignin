@@ -195,7 +195,7 @@ namespace ChopshopSignin
             {
                 Timestamps.Add(new Scan(true));
 
-                var statusMessage = string.Format("{0} {1} in at {2}", FirstName, LastName, Timestamps.Last().ScanTime.ToShortDateString());
+                var statusMessage = string.Format("{0} {1} in at {2}", FirstName, LastName, Timestamps.Last().ScanTime.ToShortTimeString());
                 return new SignInOutResult(true, statusMessage);
             }
             else
@@ -215,7 +215,7 @@ namespace ChopshopSignin
             {
                 Timestamps.Add(new Scan(false));
 
-                var statusMessage = string.Format("{0} {1} out at {2}", FirstName, LastName, Timestamps.Last().ScanTime.ToShortDateString());
+                var statusMessage = string.Format("{0} {1} out at {2}", FirstName, LastName, Timestamps.Last().ScanTime.ToShortTimeString());
                 return new SignInOutResult(true, statusMessage);
             }
             else
