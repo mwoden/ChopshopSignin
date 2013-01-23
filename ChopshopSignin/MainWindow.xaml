@@ -7,6 +7,9 @@
         Closed="Window_Closed"
         WindowState="Maximized"
         WindowStyle="None">
+    <Window.Resources>
+        <BitmapImage x:Key="TeamLogo" UriSource="/ChopShopLogo.jpg"/>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="4*"/>
@@ -31,14 +34,19 @@
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="{Binding CurrentTimeString}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Center"
-                   FontWeight="Bold" FontSize="132"/>
+            <TextBlock Grid.Row="0" Text="{Binding CurrentTimeString}" TextWrapping="Wrap" TextAlignment="Center"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                        FontWeight="Bold" FontSize="132"/>
 
-            <TextBlock Grid.Row="1" Text="{Binding Path=ScanStatus}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Center"
-                   FontWeight="Bold" FontSize="60"/>
+            <Image Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Source="{StaticResource ResourceKey=TeamLogo}"/>
+
+            <TextBlock Grid.Row="2" Text="{Binding Path=ScanStatus}" TextWrapping="Wrap" TextAlignment="Center"
+                       HorizontalAlignment="Stretch" VerticalAlignment="Center"                    
+                       FontWeight="Bold" FontSize="60"/>
         </Grid>
     </Grid>
 </Window>
