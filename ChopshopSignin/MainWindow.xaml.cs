@@ -21,11 +21,13 @@ namespace ChopshopSignin
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, IDisposable
     {
+        // The current command to execute based on the scan data
         private enum ScanCommand { NoCommmand, In, Out, AllOutNow }
 
-        private const string XmlDataFileName = @"ScanData.xml";
+        private const string windowIconPath = @"/timeclock-icon.ico";
+        private const string xmlDataFileName = @"ScanData.xml";
 
         private readonly ViewModel viewModel = new ViewModel();
         private readonly System.Timers.Timer clockTimer = new System.Timers.Timer(100);
@@ -39,6 +41,7 @@ namespace ChopshopSignin
 
         private readonly object syncObject = new object();
 
+        // Dictionary for determining who is currently signed in
         private Dictionary<string, Person> People = new Dictionary<string, Person>();
 
         // The data that hsa been entered to the app so far, and needs a '\r' terminator
@@ -60,13 +63,16 @@ namespace ChopshopSignin
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
+            // Set the window icon to the 
+            Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(windowIconPath, UriKind.Relative)).Stream);
+
             DataContext = viewModel;
 
             clockTimer.Elapsed += ClockTick;
             clockTimer.Enabled = true;
 
             OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            XmlDataFile = System.IO.Path.Combine(OutputFolder, XmlDataFileName);
+            XmlDataFile = System.IO.Path.Combine(OutputFolder, xmlDataFileName);
         }
 
         void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -166,7 +172,7 @@ namespace ChopshopSignin
                         case ScanCommand.NoCommmand:
                         default:
                             var newPerson = Person.Create(scanData);
-                        
+
                             // If the scan data fits the pattern of a person scan
                             if (newPerson != null)
                             {
@@ -237,6 +243,25 @@ namespace ChopshopSignin
             var result = MessageBox.Show(message, "Confirm signing all out", MessageBoxButton.YesNo,
                                             MessageBoxImage.Warning, MessageBoxResult.No);
             return result == MessageBoxResult.Yes;
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool disposed = false;
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (!disposed)
+                {
+                    disposed = true;
+                    clockTimer.Dispose();
+                }
+            }
         }
     }
 }
