@@ -1,6 +1,4 @@
-﻿#undef NO_SAVE
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -56,7 +54,6 @@ namespace ChopshopSignin
         // Time that indicagtes when to clear the scan data if garbage has been entered
         private DateTime? resetCurrentScan;
 
-
         public MainWindow()
         {
             InitializeComponent();
@@ -71,6 +68,7 @@ namespace ChopshopSignin
             clockTimer.Elapsed += ClockTick;
             clockTimer.Enabled = true;
 
+            // Set up the variables for future use
             OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             XmlDataFile = System.IO.Path.Combine(OutputFolder, xmlDataFileName);
         }
@@ -82,20 +80,24 @@ namespace ChopshopSignin
 
         void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
         {
+            // Update the currently displayed time
             viewModel.CurrentTime = DateTime.Now;
 
+            // Check if there's someone waiting to scan in or out, and the reset person timer is active
             if (currentScannedPerson != null && resetCurrentPerson != null)
-            {
+                // If the reset time has passed
                 if (resetCurrentPerson < DateTime.Now)
                 {
                     currentScannedPerson = null;
                     resetCurrentPerson = null;
                     viewModel.ScanStatus = "You waited too long, please re-scan your name";
                 }
-            }
 
+            // If the reset scan timer is active
             if (resetCurrentScan != null)
+                // If the reset time has passed
                 if (resetCurrentScan < DateTime.Now)
+                    // Clear the current scan data
                     lock (syncObject)
                     {
                         resetCurrentScan = null;
@@ -105,6 +107,8 @@ namespace ChopshopSignin
 
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
         {
+            // If there isn't a scan already in progress, set up the timer to
+            // reset the scan data (to clear anything accidently entered by keyboard)
             if (resetCurrentScan == null)
                 resetCurrentScan = DateTime.Now + ResetScanDataTime;
 
@@ -112,13 +116,14 @@ namespace ChopshopSignin
             {
                 scanDataInProgress.Append(e.Text);
 
+                // If the termination character has been seen, start processing
                 if (e.Text == "\r")
                 {
                     // Extract the current scan data
                     var scanData = scanDataInProgress.ToString().Trim();
                     scanDataInProgress = new StringBuilder();
 
-                    // Disable reseting the current scan data
+                    // Disable the reset scan timer
                     resetCurrentScan = null;
 
                     // Determine if a command was scanned
@@ -135,6 +140,7 @@ namespace ChopshopSignin
                                 var result = currentScannedPerson.SignInOrOut(command == ScanCommand.In);
                                 if (result.OperationSucceeded)
                                 {
+                                    // Clear the scanned person
                                     currentScannedPerson = null;
 
                                     // Update the display of who's signed in
@@ -148,6 +154,7 @@ namespace ChopshopSignin
                                 if (resetCurrentPerson != null)
                                     resetCurrentPerson = DateTime.Now + ScanInOutWindow;
 
+                                // Display the result of the sign in/out operation
                                 viewModel.ScanStatus = result.Status;
                             }
                             else
@@ -177,12 +184,18 @@ namespace ChopshopSignin
                             if (newPerson != null)
                             {
                                 var name = newPerson.FullName;
+
+                                // If the person isn't already in the dictionary, add them
                                 if (!People.ContainsKey(name))
                                     People[name] = newPerson;
 
+                                // Set the person waiting for an in or out scan
                                 currentScannedPerson = People[name];
 
+                                // Update the display to display the person's name
                                 viewModel.ScanStatus = currentScannedPerson.FirstName + ", sign in or out";
+
+                                // Set the reset person timer
                                 resetCurrentPerson = DateTime.Now + ScanInOutWindow;
                             }
                             break;
@@ -195,6 +208,7 @@ namespace ChopshopSignin
         {
             People = Person.Load(XmlDataFile).ToDictionary(x => x.FullName, x => x);
 
+            // Update the displayed lists after loading all data
             viewModel.UpdateCheckedInLists(People.Values);
         }
 
@@ -202,11 +216,20 @@ namespace ChopshopSignin
         {
             clockTimer.Enabled = false;
 
+            // Save the scan data
             Person.Save(People.Values, XmlDataFile);
+
+            // Generate the mentor and student summary files
             SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Student);
             SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Mentor);
+
+            Dispose();
         }
 
+        /// <summary>
+        /// Find anyone signed in and sign them out
+        /// </summary>
+        /// <returns>Result with status and display string</returns>
         private SignInOutResult SignAllOut()
         {
             var remaining = People.Values.Where(x => x.CurrentLocation == Scan.LocationType.In);
@@ -218,6 +241,10 @@ namespace ChopshopSignin
             return new SignInOutResult(true, status);
         }
 
+        /// <summary>
+        /// Parse the string into the appropriate command
+        /// </summary>
+        /// <returns>The appropriate command for the string, or NoCommand</returns>
         private ScanCommand ParseCommand(string input)
         {
             ScanCommand result;
@@ -227,27 +254,21 @@ namespace ChopshopSignin
             return result;
         }
 
-        private void Student_Filter(object sender, FilterEventArgs e)
-        {
-            e.Accepted = false;
-
-            var person = e.Item as Person;
-            if (person != null && person.Role == Person.RoleType.Student)
-                e.Accepted = true;
-        }
-
+        // Display a dialog to prevent accidentally signing everyone out
         private bool ConfirmAllOutCommand()
         {
             var message = "You are about to sign out all currently signed-in people" + Environment.NewLine +
                           "Please select 'Yes' to sign everyone out";
+
             var result = MessageBox.Show(message, "Confirm signing all out", MessageBoxButton.YesNo,
                                             MessageBoxImage.Warning, MessageBoxResult.No);
+
             return result == MessageBoxResult.Yes;
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            Dispose(true);
         }
 
         private bool disposed = false;
