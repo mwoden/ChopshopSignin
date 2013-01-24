@@ -215,6 +215,12 @@ namespace ChopshopSignin
 
             // Update the displayed lists after loading all data
             viewModel.UpdateCheckedInList(People.Values);
+
+            if (People.Any())
+            {
+                var total = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Kickoff)));
+                var t = People.First().Value.GetTotalTimeSince(Kickoff);
+            }
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -222,11 +228,13 @@ namespace ChopshopSignin
             clockTimer.Enabled = false;
 
             // Save the scan data
-            Person.Save(People.Values, XmlDataFile);
+            //TODO Remove comment
+            //Person.Save(People.Values, XmlDataFile);
 
             // Generate the mentor and student summary files
-            SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Student);
-            SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Mentor);
+            //TODO Remove comment
+            //SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Student);
+            //SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Mentor);
 
             Dispose();
         }

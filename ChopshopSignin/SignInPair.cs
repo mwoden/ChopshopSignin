@@ -64,6 +64,14 @@ namespace ChopshopSignin
                 Out == null ? string.Empty : ((DateTime)Out).ToShortTimeString());
         }
 
+        public TimeSpan TotalTime()
+        {
+            if (In == null)
+                return TimeSpan.Zero;
+
+            return (Out ?? DateTime.Now) - (DateTime)In;
+        }
+
         public static IDictionary<DayOfWeek, SignInPair[]> GetWeekInOutPairs(IEnumerable<Scan> timeStamps)
         {
             if (timeStamps.First().Direction != Scan.LocationType.In)
