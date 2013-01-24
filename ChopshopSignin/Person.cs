@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace ChopshopSignin
 {
-    class Person : IEquatable<Person>
+    sealed internal class Person : IEquatable<Person>
     {
         public enum RoleType { Invalid, Student, Mentor }
 
@@ -29,6 +29,22 @@ namespace ChopshopSignin
                 return today.Last().Direction;
             }
         }
+
+        /// <summary>
+        /// Returns the most recent time in for the current day
+        /// </summary>
+        public DateTime? TimeIn
+        {
+            get
+            {
+                var lastInScan = Timestamps.Where(x => x.ScanTime.Date == DateTime.Today).Where(x => x.Direction == Scan.LocationType.In).LastOrDefault();
+                if (lastInScan == null)
+                    return null;
+
+                return lastInScan.ScanTime;
+            }
+        }
+
         public RoleType Role { get; private set; }
 
         public List<Scan> Timestamps { get; private set; }
@@ -84,6 +100,9 @@ namespace ChopshopSignin
 
         public bool Equals(Person other)
         {
+            if (other == null)
+                return false;
+
             return FullName.Equals(other.FullName, StringComparison.OrdinalIgnoreCase);
         }
 

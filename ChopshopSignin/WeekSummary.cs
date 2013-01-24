@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ChopshopSignin
 {
-    class WeekSummary
+    sealed internal class WeekSummary
     {
         public int Week { get; private set; }
         public string FullName { get; private set; }

@@ -19,7 +19,7 @@ namespace ChopshopSignin
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, IDisposable
+    sealed internal partial class MainWindow : Window, IDisposable
     {
         // The current command to execute based on the scan data
         private enum ScanCommand { NoCommmand, In, Out, AllOutNow }
@@ -62,6 +62,11 @@ namespace ChopshopSignin
 
             // Set the window icon to the 
             Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(windowIconPath, UriKind.Relative)).Stream);
+
+            var sortDesc = new System.ComponentModel.SortDescription("FullName", System.ComponentModel.ListSortDirection.Ascending);
+
+            ((CollectionViewSource)FindResource("CheckedInStudents")).SortDescriptions.Add(sortDesc);
+            ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
 
             DataContext = viewModel;
 
@@ -144,7 +149,7 @@ namespace ChopshopSignin
                                     currentScannedPerson = null;
 
                                     // Update the display of who's signed in
-                                    viewModel.UpdateCheckedInLists(People.Values);
+                                    viewModel.UpdateCheckedInList(People.Values);
 
                                     // Save the current list
                                     Person.Save(People.Values, XmlDataFile);
@@ -169,7 +174,7 @@ namespace ChopshopSignin
                                 if (allOutResult.OperationSucceeded)
                                     viewModel.ScanStatus = allOutResult.Status;
 
-                                viewModel.UpdateCheckedInLists(People.Values);
+                                viewModel.UpdateCheckedInList(People.Values);
                             }
                             else
                                 viewModel.ScanStatus = "Sign everyone out command cancelled";
@@ -209,7 +214,7 @@ namespace ChopshopSignin
             People = Person.Load(XmlDataFile).ToDictionary(x => x.FullName, x => x);
 
             // Update the displayed lists after loading all data
-            viewModel.UpdateCheckedInLists(People.Values);
+            viewModel.UpdateCheckedInList(People.Values);
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -283,6 +288,24 @@ namespace ChopshopSignin
                     clockTimer.Dispose();
                 }
             }
+        }
+
+        private void Mentor_Filter(object sender, FilterEventArgs e)
+        {
+            e.Accepted = AcceptPerson(e.Item as Person, Person.RoleType.Mentor);
+        }
+
+        private void Student_Filter(object sender, FilterEventArgs e)
+        {
+            e.Accepted = AcceptPerson(e.Item as Person, Person.RoleType.Student);
+        }
+
+        private bool AcceptPerson(Person candidate, Person.RoleType roleFilter)
+        {
+            if (candidate != null && candidate.Role == roleFilter)
+                return true;
+
+            return false;
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ChopshopSignin
 {
-    class SignInOutResult
+    sealed internal class SignInOutResult
     {
         public bool OperationSucceeded { get; private set; }
         public string Status { get; private set; }

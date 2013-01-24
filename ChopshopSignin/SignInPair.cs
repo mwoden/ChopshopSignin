@@ -8,7 +8,7 @@ namespace ChopshopSignin
     /// <summary>
     /// Holds the in/out scan pair
     /// </summary>
-    class SignInPair
+    sealed internal class SignInPair
     {
         public DateTime? In { get; private set; }
         public DateTime? Out { get; private set; }

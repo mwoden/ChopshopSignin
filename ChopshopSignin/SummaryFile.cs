@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ChopshopSignin
 {
-    class SummaryFile
+    sealed internal class SummaryFile
     {
         public static void CreateAllFiles(string outputFolder, DateTime kickoff, IEnumerable<Person> people, Person.RoleType role)
         {

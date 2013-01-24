@@ -6,7 +6,7 @@ using System.Xml.Linq;
 
 namespace ChopshopSignin
 {
-    class Scan : IEquatable<Scan>
+    sealed internal class Scan : IEquatable<Scan>
     {
         public enum LocationType { Invalid, In, Out }
 
