@@ -164,8 +164,7 @@ namespace ChopshopSignin
         {
             if (System.IO.File.Exists(filePath))
             {
-                //TODO Remove comment
-                //BackupDataFile(filePath);
+                BackupDataFile(filePath);
                 return XElement.Load(filePath).Elements().Select(x => new Person(x));
             }
 

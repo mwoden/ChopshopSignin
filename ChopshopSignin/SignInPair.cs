@@ -57,6 +57,10 @@ namespace ChopshopSignin
                 Out == null ? string.Empty : ((DateTime)Out).ToShortTimeString());
         }
 
+        /// <summary>
+        /// Get the CSV string representing the in and out time the SignInPair
+        /// If a value doesn't exist, and empty string will be used
+        /// </summary>
         public string GetCsvString()
         {
             return string.Format("{0},{1}",
@@ -64,6 +68,10 @@ namespace ChopshopSignin
                 Out == null ? string.Empty : ((DateTime)Out).ToShortTimeString());
         }
 
+        /// <summary>
+        /// Get the total time that the pair represents
+        /// If there is no Out time, the current time will be used
+        /// </summary>
         public TimeSpan TotalTime()
         {
             if (In == null)

@@ -48,8 +48,13 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-            <GroupBox Grid.Column="0" TextElement.FontSize="18">
+            <GroupBox Grid.Row="0" Grid.Column="0" TextElement.FontSize="18">
                 <GroupBox.Header>
                     <TextBlock FontSize="22" Text="{Binding Path=StudentListHeader}"/>
                 </GroupBox.Header>
@@ -72,7 +77,7 @@
                 </ItemsControl>
             </GroupBox>
 
-            <GroupBox Grid.Column="1" TextElement.FontSize="18">
+            <GroupBox Grid.Row="0" Grid.Column="1" TextElement.FontSize="18">
                 <GroupBox.Header>
                     <TextBlock FontSize="22" Text="{Binding Path=MentorListHeader}"/>
                 </GroupBox.Header>
@@ -95,6 +100,13 @@
                 </ItemsControl>
             </GroupBox>
 
+            <GroupBox Grid.Row="1" Grid.ColumnSpan="2" TextElement.FontSize="28">
+                <GroupBox.Header>
+                    <TextBlock FontSize="22" Text="{Binding Path=TimeSpentHeader}"/>
+                </GroupBox.Header>
+                <TextBlock TextAlignment="Center" Text="{Binding Path=TotalTimeString}"/>
+            </GroupBox>
+            
         </Grid>
     </Grid>
 </Window>
