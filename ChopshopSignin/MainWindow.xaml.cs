@@ -29,6 +29,8 @@ namespace ChopshopSignin
 
         private readonly ViewModel viewModel = new ViewModel();
         private readonly System.Timers.Timer clockTimer = new System.Timers.Timer(100);
+        // Update the total time spent every 5 minutes
+        private readonly System.Timers.Timer totalTimeTimer = new System.Timers.Timer(5 * 60 * 1000);
         private readonly DateTime Kickoff = new DateTime(2013, 1, 5);
 
         private readonly TimeSpan ScanInOutWindow = new TimeSpan(0, 0, 10);
@@ -58,7 +60,7 @@ namespace ChopshopSignin
         {
             InitializeComponent();
 
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
 
             // Set the window icon to the 
             Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(windowIconPath, UriKind.Relative)).Stream);
@@ -73,16 +75,26 @@ namespace ChopshopSignin
             clockTimer.Elapsed += ClockTick;
             clockTimer.Enabled = true;
 
+            totalTimeTimer.Elapsed += UpdateTotalTime;
+            totalTimeTimer.Enabled = true;
+
             // Set up the variables for future use
             OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             XmlDataFile = System.IO.Path.Combine(OutputFolder, xmlDataFileName);
         }
 
-        void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        /// <summary>
+        /// Logs an unhandled exception to a file called Exception.txt
+        /// </summary>
+        void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
             System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
         }
 
+        /// <summary>
+        /// Main timer, runs every 100 ms
+        /// This updates the displayed time, and handles timed events
+        /// </summary>
         void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
         {
             // Update the currently displayed time
@@ -108,6 +120,14 @@ namespace ChopshopSignin
                         resetCurrentScan = null;
                         scanDataInProgress = new StringBuilder();
                     }
+        }
+
+        /// <summary>
+        /// Updates the current value of the total time contributed
+        /// </summary>
+        void UpdateTotalTime(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            UpdateTotalTime();
         }
 
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
@@ -215,6 +235,8 @@ namespace ChopshopSignin
 
             // Update the displayed lists after loading all data
             viewModel.UpdateCheckedInList(People.Values);
+
+            UpdateTotalTime();
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -259,7 +281,10 @@ namespace ChopshopSignin
             return result;
         }
 
-        // Display a dialog to prevent accidentally signing everyone out
+        /// <summary>
+        /// Display a dialog to prevent accidentally signing everyone out 
+        /// </summary>
+        /// <returns>True if the user clicked Yes, False otherwise</returns>
         private bool ConfirmAllOutCommand()
         {
             var message = "You are about to sign out all currently signed-in people" + Environment.NewLine +
@@ -286,6 +311,8 @@ namespace ChopshopSignin
                 {
                     disposed = true;
                     clockTimer.Dispose();
+                    totalTimeTimer.Dispose();
+                    GC.SuppressFinalize(this);
                 }
             }
         }
@@ -306,6 +333,12 @@ namespace ChopshopSignin
                 return true;
 
             return false;
+        }
+
+        private void UpdateTotalTime()
+        {
+            viewModel.OldestTime = People.Values.SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
+            viewModel.TotalTime = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Kickoff)));
         }
     }
 }

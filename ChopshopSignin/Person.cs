@@ -205,6 +205,52 @@ namespace ChopshopSignin
             return weekSummaries;
         }
 
+        public TimeSpan GetTotalTimeSince(DateTime startTime)
+        {
+            // Get the person's timestamps and group them by week
+            var times = Timestamps.Where(x => x.ScanTime > startTime).OrderBy(x => x.ScanTime).ToList();
+
+            var pairs = new List<SignInPair>();
+            Scan prev = null;
+
+            foreach (var scan in times)
+            {
+                // If the scan indicates in
+                if (scan.Direction == Scan.LocationType.In)
+                {
+                    // If the there isn't an in scan already
+                    if (prev == null)
+                    {
+                        // Add it
+                        prev = scan;
+                    }
+                    else
+                    {
+                        var t = new SignInPair(new[] { prev });
+                        pairs.Add(t);
+                        prev = scan;
+                    }
+                }
+                else if (scan.Direction == Scan.LocationType.Out)
+                {
+                    if (prev != null)
+                    {
+                        var t = new SignInPair(new[] { prev, scan });
+                        pairs.Add(t);
+                        prev = null;
+                    }
+                }
+            }
+
+            if (prev != null)
+            {
+                var t = new SignInPair(new[] { prev });
+                pairs.Add(t);
+            }
+
+            return pairs.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.TotalTime()));
+        }
+
         /// <summary>
         /// Signs a person in, and returns an corresponding sign in/out result
         /// </summary>
