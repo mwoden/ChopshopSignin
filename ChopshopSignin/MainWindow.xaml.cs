@@ -35,6 +35,7 @@ namespace ChopshopSignin
 
         private readonly TimeSpan ScanInOutWindow = new TimeSpan(0, 0, 10);
         private readonly TimeSpan ResetScanDataTime = new TimeSpan(0, 0, 3);
+        private readonly TimeSpan ClearStatusTime = new TimeSpan(0, 1, 0);
 
         private readonly string OutputFolder;
         private readonly string XmlDataFile;
@@ -53,8 +54,11 @@ namespace ChopshopSignin
         // Time that indicates when the current selected person will be reset
         private DateTime? resetCurrentPerson;
 
-        // Time that indicagtes when to clear the scan data if garbage has been entered
+        // Time that indicates when to clear the scan data if garbage has been entered
         private DateTime? resetCurrentScan;
+
+        // Time that indicates when to clear the displayed scan status
+        private DateTime? resetScanStatus;
 
         public MainWindow()
         {
@@ -108,6 +112,7 @@ namespace ChopshopSignin
                     currentScannedPerson = null;
                     resetCurrentPerson = null;
                     viewModel.ScanStatus = "You waited too long, please re-scan your name";
+                    resetScanStatus = DateTime.Now + ClearStatusTime;
                 }
 
             // If the reset scan timer is active
@@ -120,6 +125,16 @@ namespace ChopshopSignin
                         resetCurrentScan = null;
                         scanDataInProgress = new StringBuilder();
                     }
+
+            // If the clear status timer is active
+            if (resetScanStatus != null)
+                // If the reset time has passed
+                if (resetScanStatus < DateTime.Now)
+                // Clear the status messages
+                {
+                    viewModel.ScanStatus = string.Empty;
+                    resetScanStatus = null;
+                }
         }
 
         /// <summary>
@@ -181,9 +196,17 @@ namespace ChopshopSignin
 
                                 // Display the result of the sign in/out operation
                                 viewModel.ScanStatus = result.Status;
+
+                                // Set up the clear status timer
+                                resetScanStatus = DateTime.Now + ClearStatusTime;
                             }
                             else
+                            {
                                 viewModel.ScanStatus = "Please scan your name first";
+
+                                // Set up the clear status timer
+                                resetScanStatus = DateTime.Now + ClearStatusTime;
+                            }
                             break;
 
                         case ScanCommand.AllOutNow:
@@ -197,7 +220,12 @@ namespace ChopshopSignin
                                 viewModel.UpdateCheckedInList(People.Values);
                             }
                             else
+                            {
                                 viewModel.ScanStatus = "Sign everyone out command cancelled";
+
+                                // Set up the clear status timer
+                                resetScanStatus = DateTime.Now + ClearStatusTime;
+                            }
                             break;
 
                         // Non-command scan, store the data in the current scan
@@ -222,6 +250,9 @@ namespace ChopshopSignin
 
                                 // Set the reset person timer
                                 resetCurrentPerson = DateTime.Now + ScanInOutWindow;
+
+                                // Set up the clear status timer
+                                resetScanStatus = DateTime.Now + ClearStatusTime;
                             }
                             break;
                     }
@@ -337,8 +368,11 @@ namespace ChopshopSignin
 
         private void UpdateTotalTime()
         {
-            viewModel.OldestTime = People.Values.SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
-            viewModel.TotalTime = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Kickoff)));
+            if (People.Any())
+            {
+                viewModel.OldestTime = People.Values.SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
+                viewModel.TotalTime = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Kickoff)));
+            }
         }
     }
 }
