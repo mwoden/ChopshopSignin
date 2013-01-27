@@ -15,7 +15,7 @@ namespace ChopshopSignin
         public string ScanStatus
         {
             get { lock (syncObject) { return m_LastScan; } }
-            set { lock (syncObject) { m_LastScan = value; FirePropertyChanged("ScanStatus"); } }
+            set { lock (syncObject) { m_LastScan = value; resetStatusTimer = DateTime.Now + ClearStatusTime; FirePropertyChanged("ScanStatus"); } }
         }
 
         /// <summary>
@@ -116,6 +116,29 @@ namespace ChopshopSignin
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        /// <summary>
+        /// Timer handler for clearing the status
+        /// </summary>
+        public void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (resetStatusTimer != null)
+                if (resetStatusTimer < e.SignalTime)
+                {
+                    ScanStatus = string.Empty;
+                    resetStatusTimer = null;
+                }
+        }
+
+        /// <summary>
+        /// The length of time the scan status message will be displayed, in seconds.
+        /// The default is one minue.
+        /// </summary>
+        public int DisplayTime
+        {
+            get { return (int) ClearStatusTime.TotalSeconds; }
+            set { ClearStatusTime = TimeSpan.FromSeconds(value); }
+        }
+
         private object syncObject = new object();
 
         private string m_LastScan = string.Empty;
@@ -125,6 +148,12 @@ namespace ChopshopSignin
         private ObservableCollection<Person> m_CheckedIn = new ObservableCollection<Person>();
         private TimeSpan m_TotalTime = TimeSpan.Zero;
         private DateTime m_OldestTime = DateTime.Now;
+
+        // Time that a status message will be displayed
+        private TimeSpan ClearStatusTime = new TimeSpan(0, 1, 0);
+
+        // Time that indicates when to clear the displayed scan status
+        private DateTime? resetStatusTimer;
 
         private void FirePropertyChanged(string propertyName)
         {

@@ -57,9 +57,6 @@ namespace ChopshopSignin
         // Time that indicates when to clear the scan data if garbage has been entered
         private DateTime? resetCurrentScan;
 
-        // Time that indicates when to clear the displayed scan status
-        private DateTime? resetScanStatus;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -77,6 +74,7 @@ namespace ChopshopSignin
             DataContext = viewModel;
 
             clockTimer.Elapsed += ClockTick;
+            clockTimer.Elapsed += viewModel.ClockTick;
             clockTimer.Enabled = true;
 
             totalTimeTimer.Elapsed += UpdateTotalTime;
@@ -102,39 +100,28 @@ namespace ChopshopSignin
         void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
         {
             // Update the currently displayed time
-            viewModel.CurrentTime = DateTime.Now;
+            viewModel.CurrentTime = e.SignalTime;
 
             // Check if there's someone waiting to scan in or out, and the reset person timer is active
             if (currentScannedPerson != null && resetCurrentPerson != null)
                 // If the reset time has passed
-                if (resetCurrentPerson < DateTime.Now)
+                if (resetCurrentPerson < e.SignalTime)
                 {
                     currentScannedPerson = null;
                     resetCurrentPerson = null;
                     viewModel.ScanStatus = "You waited too long, please re-scan your name";
-                    resetScanStatus = DateTime.Now + ClearStatusTime;
                 }
 
             // If the reset scan timer is active
             if (resetCurrentScan != null)
                 // If the reset time has passed
-                if (resetCurrentScan < DateTime.Now)
+                if (resetCurrentScan < e.SignalTime)
                     // Clear the current scan data
                     lock (syncObject)
                     {
                         resetCurrentScan = null;
                         scanDataInProgress = new StringBuilder();
                     }
-
-            // If the clear status timer is active
-            if (resetScanStatus != null)
-                // If the reset time has passed
-                if (resetScanStatus < DateTime.Now)
-                // Clear the status messages
-                {
-                    viewModel.ScanStatus = string.Empty;
-                    resetScanStatus = null;
-                }
         }
 
         /// <summary>
@@ -196,17 +183,9 @@ namespace ChopshopSignin
 
                                 // Display the result of the sign in/out operation
                                 viewModel.ScanStatus = result.Status;
-
-                                // Set up the clear status timer
-                                resetScanStatus = DateTime.Now + ClearStatusTime;
                             }
                             else
-                            {
                                 viewModel.ScanStatus = "Please scan your name first";
-
-                                // Set up the clear status timer
-                                resetScanStatus = DateTime.Now + ClearStatusTime;
-                            }
                             break;
 
                         case ScanCommand.AllOutNow:
@@ -220,12 +199,7 @@ namespace ChopshopSignin
                                 viewModel.UpdateCheckedInList(People.Values);
                             }
                             else
-                            {
                                 viewModel.ScanStatus = "Sign everyone out command cancelled";
-
-                                // Set up the clear status timer
-                                resetScanStatus = DateTime.Now + ClearStatusTime;
-                            }
                             break;
 
                         // Non-command scan, store the data in the current scan
@@ -250,9 +224,6 @@ namespace ChopshopSignin
 
                                 // Set the reset person timer
                                 resetCurrentPerson = DateTime.Now + ScanInOutWindow;
-
-                                // Set up the clear status timer
-                                resetScanStatus = DateTime.Now + ClearStatusTime;
                             }
                             break;
                     }
@@ -370,7 +341,7 @@ namespace ChopshopSignin
         {
             if (People.Any())
             {
-                viewModel.OldestTime = People.Values.SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
+                viewModel.OldestTime = People.Values.Where(x => x.Timestamps.Any()).SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
                 viewModel.TotalTime = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Kickoff)));
             }
         }
