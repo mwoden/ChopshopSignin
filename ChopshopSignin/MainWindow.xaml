@@ -23,7 +23,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="4*"/>
             <ColumnDefinition Width="2*"/>
-                    </Grid.ColumnDefinitions>
+        </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
@@ -42,15 +42,16 @@
                        HorizontalAlignment="Stretch" VerticalAlignment="Center"                    
                        FontWeight="Bold" FontSize="60"/>
         </Grid>
-        
+
         <Grid Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            
+
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
@@ -69,7 +70,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Text="{Binding Path=FullName}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
+                                <TextBlock Grid.Column="1" TextAlignment="Right" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
 
                             </Grid>
                         </DataTemplate>
@@ -106,7 +107,24 @@
                 </GroupBox.Header>
                 <TextBlock TextAlignment="Center" Text="{Binding Path=TotalTimeString}"/>
             </GroupBox>
-            
+
+            <GroupBox Grid.Row="2" Grid.ColumnSpan="2" TextElement.FontSize="28">
+                <GroupBox.Style>
+                    <Style TargetType="{x:Type GroupBox}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=ShowTimeUntilShip}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                        <!--<Setter Property="Visibility" Value="Hidden"/>-->
+                    </Style>
+                </GroupBox.Style>                
+                <GroupBox.Header>
+                    <TextBlock FontSize="22">Time Until Ship</TextBlock>
+                </GroupBox.Header>
+                <TextBlock TextAlignment="Center" Text="{Binding Path=TimeUntilShip}"/>
+            </GroupBox>
+
         </Grid>
     </Grid>
 </Window>

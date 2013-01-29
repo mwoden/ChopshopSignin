@@ -24,18 +24,12 @@ namespace ChopshopSignin
         // The current command to execute based on the scan data
         private enum ScanCommand { NoCommmand, In, Out, AllOutNow }
 
-        private const string windowIconPath = @"/timeclock-icon.ico";
-        private const string xmlDataFileName = @"ScanData.xml";
-
         private readonly ViewModel viewModel = new ViewModel();
         private readonly System.Timers.Timer clockTimer = new System.Timers.Timer(100);
-        // Update the total time spent every 5 minutes
-        private readonly System.Timers.Timer totalTimeTimer = new System.Timers.Timer(5 * 60 * 1000);
-        private readonly DateTime Kickoff = new DateTime(2013, 1, 5);
+        private readonly System.Timers.Timer totalTimeTimer = new System.Timers.Timer(Settings.Instance.TotalTimeUpdateInterval * 1000);
 
-        private readonly TimeSpan ScanInOutWindow = new TimeSpan(0, 0, 10);
-        private readonly TimeSpan ResetScanDataTime = new TimeSpan(0, 0, 3);
-        private readonly TimeSpan ClearStatusTime = new TimeSpan(0, 1, 0);
+        private readonly TimeSpan ScanInOutWindow = TimeSpan.FromSeconds(Settings.Instance.ScanInTimeoutWindow);
+        private readonly TimeSpan ResetScanDataTime = TimeSpan.FromSeconds(Settings.Instance.ScanDataResetTime);
 
         private readonly string OutputFolder;
         private readonly string XmlDataFile;
@@ -64,12 +58,16 @@ namespace ChopshopSignin
             AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
 
             // Set the window icon to the 
-            Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(windowIconPath, UriKind.Relative)).Stream);
+            Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(Properties.Resources.WindowIconPath, UriKind.Relative)).Stream);
 
             var sortDesc = new System.ComponentModel.SortDescription("FullName", System.ComponentModel.ListSortDirection.Ascending);
 
             ((CollectionViewSource)FindResource("CheckedInStudents")).SortDescriptions.Add(sortDesc);
             ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
+
+            viewModel.DisplayTime = Settings.Instance.ClearScanStatusTime;
+            viewModel.ShipDate = Settings.Instance.Ship;
+            viewModel.ShowTimeUntilShip = Settings.Instance.ShowTimeUntilShip;
 
             DataContext = viewModel;
 
@@ -82,7 +80,7 @@ namespace ChopshopSignin
 
             // Set up the variables for future use
             OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            XmlDataFile = System.IO.Path.Combine(OutputFolder, xmlDataFileName);
+            XmlDataFile = System.IO.Path.Combine(OutputFolder, Properties.Resources.ScanDataFileName);
         }
 
         /// <summary>
@@ -249,8 +247,8 @@ namespace ChopshopSignin
             Person.Save(People.Values, XmlDataFile);
 
             // Generate the mentor and student summary files
-            SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Student);
-            SummaryFile.CreateAllFiles(OutputFolder, Kickoff, People.Values, Person.RoleType.Mentor);
+            SummaryFile.CreateAllFiles(OutputFolder, Settings.Instance.Kickoff, People.Values, Person.RoleType.Student);
+            SummaryFile.CreateAllFiles(OutputFolder, Settings.Instance.Kickoff, People.Values, Person.RoleType.Mentor);
 
             Dispose();
         }
@@ -342,7 +340,7 @@ namespace ChopshopSignin
             if (People.Any())
             {
                 viewModel.OldestTime = People.Values.Where(x => x.Timestamps.Any()).SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
-                viewModel.TotalTime = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Kickoff)));
+                viewModel.TotalTime = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Settings.Instance.Kickoff)));
             }
         }
     }

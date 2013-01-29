@@ -15,7 +15,7 @@ namespace ChopshopSignin
         public string ScanStatus
         {
             get { lock (syncObject) { return m_LastScan; } }
-            set { lock (syncObject) { m_LastScan = value; resetStatusTimer = DateTime.Now + ClearStatusTime; FirePropertyChanged("ScanStatus"); } }
+            set { lock (syncObject) { m_LastScan = value; resetStatusTimer = DateTime.Now + clearStatusTime; FirePropertyChanged("ScanStatus"); } }
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace ChopshopSignin
         /// </summary>
         public string TotalTimeString
         {
-            get { return string.Format("{0:F0} days, {1:F0} hours, {2:F0} minutes", TotalTime.Days, TotalTime.Hours, TotalTime.Minutes, TotalTime.Seconds); }
+            get { return string.Format("{0:F0} days, {1:F0} hours, {2:F0} minutes", TotalTime.Days, TotalTime.Hours, TotalTime.Minutes); }
         }
 
         /// <summary>
@@ -94,6 +94,33 @@ namespace ChopshopSignin
         public string TimeSpentHeader
         {
             get { return string.Format("Time spent since {0}", OldestTime.ToShortDateString()); }
+        }
+
+        /// <summary>
+        /// The date that the robot must be packed up
+        /// </summary>
+        public DateTime ShipDate
+        {
+            get { return m_ShipDate; }
+            set { m_ShipDate = value; FirePropertyChanged("ShipDate"); }
+        }
+
+        /// <summary>
+        /// Formatted value for time left until ship
+        /// </summary>
+        public string TimeUntilShip
+        {
+            get { return m_TimeUntilShip; }
+            set { m_TimeUntilShip = value; FirePropertyChanged("TimeUntilShip"); }
+        }
+
+        /// <summary>
+        /// Determine whether to show the time left until ship or not
+        /// </summary>
+        public bool ShowTimeUntilShip
+        {
+            get { return m_ShowTimeUntilShip; }
+            set { m_ShowTimeUntilShip = value; FirePropertyChanged("ShowTimeUntilShip"); }
         }
 
         /// <summary>
@@ -127,6 +154,16 @@ namespace ChopshopSignin
                     ScanStatus = string.Empty;
                     resetStatusTimer = null;
                 }
+
+            if (ShowTimeUntilShip && ShipDate > e.SignalTime)
+            {
+                var timeLeft = ShipDate - DateTime.Now;
+
+                TimeUntilShip = timeLeft.Days.ToString("F0") + " " + (timeLeft.Days == 1 ? "day" : "days") + " " +
+                                timeLeft.Hours.ToString("F0") + " " + (timeLeft.Hours == 1 ? "hour" : "hours") + " " +
+                                timeLeft.Minutes.ToString("F0") + " " + (timeLeft.Minutes == 1 ? "minute" : "minutes") + " " +
+                                timeLeft.Seconds.ToString("F0") + " " + (timeLeft.Seconds == 1 ? "second" : "seconds");
+            }
         }
 
         /// <summary>
@@ -135,8 +172,8 @@ namespace ChopshopSignin
         /// </summary>
         public int DisplayTime
         {
-            get { return (int) ClearStatusTime.TotalSeconds; }
-            set { ClearStatusTime = TimeSpan.FromSeconds(value); }
+            get { return (int)clearStatusTime.TotalSeconds; }
+            set { clearStatusTime = TimeSpan.FromSeconds(value); }
         }
 
         private object syncObject = new object();
@@ -148,9 +185,12 @@ namespace ChopshopSignin
         private ObservableCollection<Person> m_CheckedIn = new ObservableCollection<Person>();
         private TimeSpan m_TotalTime = TimeSpan.Zero;
         private DateTime m_OldestTime = DateTime.Now;
+        private DateTime m_ShipDate = DateTime.MinValue;
+        private string m_TimeUntilShip = string.Empty;
+        private bool m_ShowTimeUntilShip = false;
 
         // Time that a status message will be displayed
-        private TimeSpan ClearStatusTime = new TimeSpan(0, 1, 0);
+        private TimeSpan clearStatusTime = new TimeSpan(0, 1, 0);
 
         // Time that indicates when to clear the displayed scan status
         private DateTime? resetStatusTimer;
