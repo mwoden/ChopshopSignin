@@ -54,12 +54,27 @@ namespace ChopshopSignin
         private static readonly Lazy<Settings> lazy = new Lazy<Settings>(() => new Settings(System.Reflection.Assembly.GetExecutingAssembly().Location, Properties.Resources.SettingsFileName));
 
         /// <summary>
+        /// Constructor to set all to default
+        /// </summary>
+        private Settings()
+        {
+            Kickoff = Defaults.Kickoff;
+            Ship = Defaults.Ship;
+            TotalTimeUpdateInterval = Defaults.TotalTimeUpdateInterval;
+            ScanInTimeoutWindow = Defaults.ScanInTimeoutWindow;
+            ScanDataResetTime = Defaults.ScanDataResetTime;
+            ClearScanStatusTime = Defaults.ClearScanStatusTime;
+            ShowTimeUntilShip = Defaults.ShowTimeUntilShip;
+        }
+
+
+        /// <summary>
         /// Constructor to load settings from a settings file
         /// </summary>
         /// <param name="executingAssembly">The location returned by System.Reflection.Assembly.GetExecutingAssembly().Location</param>
         /// <param name="settingsFile">The settings file name</param>
         private Settings(string executingAssembly, string settingsFile)
-        //: this()
+            : this()
         {
             var folder = System.IO.Path.GetDirectoryName(executingAssembly);
             var file = System.IO.Path.Combine(folder, settingsFile);
