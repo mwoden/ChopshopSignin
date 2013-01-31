@@ -26,10 +26,10 @@ namespace ChopshopSignin
 
         private readonly ViewModel viewModel = new ViewModel();
         private readonly System.Timers.Timer clockTimer = new System.Timers.Timer(100);
-        private readonly System.Timers.Timer totalTimeTimer = new System.Timers.Timer(Settings.Instance.TotalTimeUpdateInterval * 1000);
 
-        private readonly TimeSpan ScanInOutWindow = TimeSpan.FromSeconds(Settings.Instance.ScanInTimeoutWindow);
-        private readonly TimeSpan ResetScanDataTime = TimeSpan.FromSeconds(Settings.Instance.ScanDataResetTime);
+        private readonly TimeSpan ScanInOutTimeout = TimeSpan.FromSeconds(Settings.Instance.ScanInTimeoutWindow);
+        private readonly TimeSpan ResetScanDataTimeout = TimeSpan.FromSeconds(Settings.Instance.ScanDataResetTime);
+        private readonly TimeSpan UpdateTotalTimeTimeout = TimeSpan.FromSeconds(Settings.Instance.TotalTimeUpdateInterval);
 
         private readonly string OutputFolder;
         private readonly string XmlDataFile;
@@ -39,17 +39,14 @@ namespace ChopshopSignin
         // Dictionary for determining who is currently signed in
         private Dictionary<string, Person> People = new Dictionary<string, Person>();
 
-        // The data that hsa been entered to the app so far, and needs a '\r' terminator
+        // The data that has been entered to the app so far, and needs a '\r' terminator
         private StringBuilder scanDataInProgress = new StringBuilder();
 
         // The current person selected by the last scan
         private Person currentScannedPerson;
 
-        // Time that indicates when the current selected person will be reset
-        private DateTime? resetCurrentPerson;
-
-        // Time that indicates when to clear the scan data if garbage has been entered
-        private DateTime? resetCurrentScan;
+        // Scheduled events container
+        private EventList events = new EventList();
 
         public MainWindow()
         {
@@ -75,9 +72,6 @@ namespace ChopshopSignin
             clockTimer.Elapsed += viewModel.ClockTick;
             clockTimer.Enabled = true;
 
-            totalTimeTimer.Elapsed += UpdateTotalTime;
-            totalTimeTimer.Enabled = true;
-
             // Set up the variables for future use
             OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             XmlDataFile = System.IO.Path.Combine(OutputFolder, Properties.Resources.ScanDataFileName);
@@ -100,42 +94,38 @@ namespace ChopshopSignin
             // Update the currently displayed time
             viewModel.CurrentTime = e.SignalTime;
 
-            // Check if there's someone waiting to scan in or out, and the reset person timer is active
-            if (currentScannedPerson != null && resetCurrentPerson != null)
-                // If the reset time has passed
-                if (resetCurrentPerson < e.SignalTime)
+            // If the reset current person timer is active and expired
+            if (events.HasExpired(EventList.Event.ResetCurrentPerson, e.SignalTime))
+                // This shouldn't be needed, since the timer should only be set if a person was scanned
+                if (currentScannedPerson != null)
                 {
                     currentScannedPerson = null;
-                    resetCurrentPerson = null;
                     viewModel.ScanStatus = "You waited too long, please re-scan your name";
                 }
 
-            // If the reset scan timer is active
-            if (resetCurrentScan != null)
-                // If the reset time has passed
-                if (resetCurrentScan < e.SignalTime)
-                    // Clear the current scan data
-                    lock (syncObject)
-                    {
-                        resetCurrentScan = null;
-                        scanDataInProgress = new StringBuilder();
-                    }
-        }
+            // If the reset scan timer has expired
+            if (events.HasExpired(EventList.Event.ResetCurrentScan, e.SignalTime))
+                // Clear the current scan data
+                lock (syncObject)
+                    scanDataInProgress = new StringBuilder();
 
-        /// <summary>
-        /// Updates the current value of the total time contributed
-        /// </summary>
-        void UpdateTotalTime(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            UpdateTotalTime();
+            // If the update total time timer has expired
+            if (events.HasExpired(EventList.Event.UpdateTotalTime, e.SignalTime))
+            {
+                // Update the total time displayed
+                UpdateTotalTime();
+
+                // Schedule another update
+                events.Set(EventList.Event.UpdateTotalTime, UpdateTotalTimeTimeout);
+            }
         }
 
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
         {
             // If there isn't a scan already in progress, set up the timer to
             // reset the scan data (to clear anything accidently entered by keyboard)
-            if (resetCurrentScan == null)
-                resetCurrentScan = DateTime.Now + ResetScanDataTime;
+            if (!events.IsEnabled(EventList.Event.ResetCurrentScan))
+                events.Set(EventList.Event.ResetCurrentScan, ResetScanDataTimeout);
 
             lock (syncObject)
             {
@@ -149,7 +139,7 @@ namespace ChopshopSignin
                     scanDataInProgress = new StringBuilder();
 
                     // Disable the reset scan timer
-                    resetCurrentScan = null;
+                    events.Clear(EventList.Event.ResetCurrentScan);
 
                     // Determine if a command was scanned
                     var command = ParseCommand(scanData);
@@ -161,6 +151,9 @@ namespace ChopshopSignin
                             // If a person was already scanned (selected)
                             if (currentScannedPerson != null)
                             {
+                                // Reset the scan in/out timeout window
+                                events.Set(EventList.Event.ResetCurrentPerson, ScanInOutTimeout);
+
                                 // Check the sign-in result
                                 var result = currentScannedPerson.SignInOrOut(command == ScanCommand.In);
                                 if (result.OperationSucceeded)
@@ -168,16 +161,15 @@ namespace ChopshopSignin
                                     // Clear the scanned person
                                     currentScannedPerson = null;
 
+                                    // Remove the timer to reset the current person
+                                    events.Clear(EventList.Event.ResetCurrentPerson);
+
                                     // Update the display of who's signed in
                                     viewModel.UpdateCheckedInList(People.Values);
 
                                     // Save the current list
                                     Person.Save(People.Values, XmlDataFile);
                                 }
-
-                                // If they scanned a command, reset the timeout window
-                                if (resetCurrentPerson != null)
-                                    resetCurrentPerson = DateTime.Now + ScanInOutWindow;
 
                                 // Display the result of the sign in/out operation
                                 viewModel.ScanStatus = result.Status;
@@ -221,7 +213,7 @@ namespace ChopshopSignin
                                 viewModel.ScanStatus = currentScannedPerson.FirstName + ", sign in or out";
 
                                 // Set the reset person timer
-                                resetCurrentPerson = DateTime.Now + ScanInOutWindow;
+                                events.Set(EventList.Event.ResetCurrentPerson, ScanInOutTimeout);
                             }
                             break;
                     }
@@ -311,7 +303,6 @@ namespace ChopshopSignin
                 {
                     disposed = true;
                     clockTimer.Dispose();
-                    totalTimeTimer.Dispose();
                     GC.SuppressFinalize(this);
                 }
             }
@@ -335,11 +326,21 @@ namespace ChopshopSignin
             return false;
         }
 
+        /// <summary>
+        /// Calculates the total time spent by all people, then sets the timer to update the total again
+        /// </summary>
         private void UpdateTotalTime()
         {
+            // Queue up the next update
+            events.Set(EventList.Event.UpdateTotalTime, UpdateTotalTimeTimeout);
+
+            // Ensure that there are some people
             if (People.Any())
             {
+                // Find the oldest time for the display
                 viewModel.OldestTime = People.Values.Where(x => x.Timestamps.Any()).SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
+
+                // Total up all the time
                 viewModel.TotalTime = People.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Settings.Instance.Kickoff)));
             }
         }
