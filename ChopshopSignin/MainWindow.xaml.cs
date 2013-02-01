@@ -25,6 +25,10 @@ namespace ChopshopSignin
         private enum ScanCommand { NoCommmand, In, Out, AllOutNow }
 
         private readonly ViewModel viewModel = new ViewModel();
+
+        // Scheduled events container
+        private readonly EventList events = new EventList();
+
         private readonly System.Timers.Timer clockTimer = new System.Timers.Timer(100);
 
         private readonly TimeSpan ScanInOutTimeout = TimeSpan.FromSeconds(Settings.Instance.ScanInTimeoutWindow);
@@ -45,8 +49,7 @@ namespace ChopshopSignin
         // The current person selected by the last scan
         private Person currentScannedPerson;
 
-        // Scheduled events container
-        private EventList events = new EventList();
+        private readonly SignInManager signInManger;
 
         public MainWindow()
         {
@@ -54,11 +57,13 @@ namespace ChopshopSignin
 
             AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionHandler;
 
+            signInManger = new SignInManager(viewModel, events);
+            
             // Set the window icon to the 
             Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(Properties.Resources.WindowIconPath, UriKind.Relative)).Stream);
 
+            // Set up the sorting for the two collection views
             var sortDesc = new System.ComponentModel.SortDescription("FullName", System.ComponentModel.ListSortDirection.Ascending);
-
             ((CollectionViewSource)FindResource("CheckedInStudents")).SortDescriptions.Add(sortDesc);
             ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
 
@@ -75,6 +80,8 @@ namespace ChopshopSignin
             // Set up the variables for future use
             OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             XmlDataFile = System.IO.Path.Combine(OutputFolder, Properties.Resources.ScanDataFileName);
+
+            signInManger.AllOutConfirmation += ConfirmAllOutCommand;
         }
 
         /// <summary>

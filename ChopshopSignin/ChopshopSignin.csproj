@@ -62,6 +62,7 @@
     <Compile Include="Person.cs" />
     <Compile Include="Scan.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SignInManager.cs" />
     <Compile Include="SignInOutResult.cs" />
     <Compile Include="SignInPair.cs" />
     <Compile Include="SummaryFile.cs" />
