@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Timers;
 using System.Windows.Input;
 
 namespace ChopshopSignin
@@ -9,19 +10,29 @@ namespace ChopshopSignin
     /// <summary>
     /// Class to manager people signing in and out
     /// </summary>
-    class SignInManager
+    sealed class SignInManager : IDisposable
     {
-        public SignInManager(ViewModel externalModel, EventList externalEventList)
-            : this()
+        public SignInManager(ViewModel externalModel, string dataFile)
+            : this(externalModel)
         {
-            model = externalModel;
-            eventList = externalEventList;
-            People = new Dictionary<string, Person>();
+            xmlDataFile = dataFile;
+            people = Person.Load(xmlDataFile).ToDictionary(x => x.FullName, x => x);
         }
 
         public Func<bool> AllOutConfirmation { get; set; }
 
-        public void TextInputHandler(string scanText)
+        public IList<Person> SignedInPeople { get { return people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In).ToArray(); } }
+
+        public void Commit()
+        {
+            if (changeCount > 0)
+            {
+                Person.Save(people.Values, xmlDataFile);
+                changeCount = 0;
+            }
+        }
+
+        public void HandleScanData(string scanText)
         {
             // If there isn't a scan already in progress, set up the timer to
             // reset the scan data (to clear anything accidently entered by keyboard)
@@ -59,6 +70,9 @@ namespace ChopshopSignin
                                 var result = currentPerson.SignInOrOut(command == ScanCommand.In);
                                 if (result.OperationSucceeded)
                                 {
+                                    // Increment the change count
+                                    changeCount++;
+
                                     // Clear the scanned person 
                                     currentPerson = null;
 
@@ -66,11 +80,10 @@ namespace ChopshopSignin
                                     eventList.Clear(EventList.Event.ResetCurrentPerson);
 
                                     // Update the display of who's signed in
-                                    model.UpdateCheckedInList(People.Values);
+                                    model.UpdateCheckedInList(people.Values);
 
-                                    //TODO Inject data file
-                                    //// Save the current list
-                                    //Person.Save(People.Values, XmlDataFile);
+                                    // Save the current list
+                                    Commit();
                                 }
 
                                 // Display the result of the sign in/out operation
@@ -95,11 +108,11 @@ namespace ChopshopSignin
                                 var name = newPerson.FullName;
 
                                 // If the person isn't already in the dictionary, add them
-                                if (!People.ContainsKey(name))
-                                    People[name] = newPerson;
+                                if (!people.ContainsKey(name))
+                                    people[name] = newPerson;
 
                                 // Set the person waiting for an in or out scan
-                                currentPerson = People[name];
+                                currentPerson = people[name];
 
                                 // Update the display to display the person's name
                                 model.ScanStatus = currentPerson.FirstName + ", sign in or out";
@@ -115,10 +128,23 @@ namespace ChopshopSignin
 
         private SignInManager()
         {
+            eventList = new EventList();
+
             currentScanData = new StringBuilder();
             ScanInOutTimeout = TimeSpan.FromSeconds(Settings.Instance.ScanInTimeoutWindow);
             ResetScanDataTimeout = TimeSpan.FromSeconds(Settings.Instance.ScanDataResetTime);
             UpdateTotalTimeTimeout = TimeSpan.FromSeconds(Settings.Instance.TotalTimeUpdateInterval);
+
+            timer = new Timer(timerInterval);
+            timer.Elapsed += ClockTick;
+            timer.Enabled = true;
+        }
+
+        private SignInManager(ViewModel externalModel)
+            : this()
+        {
+            model = externalModel;
+            people = new Dictionary<string, Person>();
         }
 
         private readonly ViewModel model;
@@ -127,11 +153,17 @@ namespace ChopshopSignin
         private readonly TimeSpan ResetScanDataTimeout;
         private readonly TimeSpan UpdateTotalTimeTimeout;
         // Dictionary for determining who is currently signed in
-        private readonly Dictionary<string, Person> People;
+        private readonly Dictionary<string, Person> people;
+
+        private const int timerInterval = 200;
+        private readonly Timer timer;
+
+        // Used to track if the currently loaded file has been changed
+        private int changeCount = 0;
 
         private StringBuilder currentScanData;
         private Person currentPerson;
-
+        private string xmlDataFile;
 
         private readonly object syncObject = new object();
 
@@ -167,17 +199,86 @@ namespace ChopshopSignin
             // Sign out all signed in users at the current time
             if (confirmAllOutCmd())
             {
-                var remaining = People.Values.Where(x => x.CurrentLocation == Scan.LocationType.In);
+                var remaining = people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In);
                 var status = string.Format("Signed out all {0} remaining at {1}", remaining.Count(), DateTime.Now.ToShortTimeString());
+
+                changeCount += remaining.Count();
 
                 foreach (var person in remaining)
                     person.SignInOrOut(false);
 
                 model.ScanStatus = status;
-                model.UpdateCheckedInList(People.Values);
+                model.UpdateCheckedInList(people.Values);
             }
             else
                 model.ScanStatus = "Sign everyone out command cancelled";
+        }
+
+        private void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            // If the reset current person timer is active and expired
+            if (eventList.HasExpired(EventList.Event.ResetCurrentPerson, e.SignalTime))
+                // This shouldn't be needed, since the timer should only be set if a person was scanned
+                if (currentPerson != null)
+                {
+                    currentPerson = null;
+                    model.ScanStatus = "You waited too long, please re-scan your name";
+                }
+
+            // If the reset scan timer has expired
+            if (eventList.HasExpired(EventList.Event.ResetCurrentScan, e.SignalTime))
+                // Clear the current scan data
+                lock (syncObject)
+                    currentScanData = new StringBuilder();
+
+            // If the update total time timer has expired
+            if (eventList.HasExpired(EventList.Event.UpdateTotalTime, e.SignalTime))
+            {
+                // Update the total time displayed
+                UpdateTotalTime();
+
+                // Schedule another update
+                eventList.Set(EventList.Event.UpdateTotalTime, UpdateTotalTimeTimeout);
+            }
+        }
+
+        /// <summary>
+        /// Calculates the total time spent by all people, then sets the timer to update the total again
+        /// </summary>
+        private void UpdateTotalTime()
+        {
+            // Queue up the next update
+            eventList.Set(EventList.Event.UpdateTotalTime, UpdateTotalTimeTimeout);
+
+            // Ensure that there are some people
+            if (people.Any())
+            {
+                // Find the oldest time for the display
+                model.OldestTime = people.Values.Where(x => x.Timestamps.Any()).SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
+
+                // Total up all the time
+                model.TotalTime = people.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Settings.Instance.Kickoff)));
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private bool disposed = false;
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (!disposed)
+                {
+                    disposed = true;
+                    timer.Dispose();
+                    GC.SuppressFinalize(this);
+                }
+            }
         }
     }
 }
