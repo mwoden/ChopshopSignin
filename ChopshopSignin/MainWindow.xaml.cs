@@ -24,9 +24,6 @@ namespace ChopshopSignin
         private readonly ViewModel viewModel;
         private readonly SignInManager signInManger;
 
-        private readonly string OutputFolder;
-        private readonly string XmlDataFile;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -35,24 +32,16 @@ namespace ChopshopSignin
 
             viewModel = new ViewModel();
 
-            // Set up the variables for future use
-            OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            XmlDataFile = System.IO.Path.Combine(OutputFolder, Properties.Resources.ScanDataFileName);
-
-            signInManger = new SignInManager(viewModel, System.IO.Path.Combine(OutputFolder, Properties.Resources.ScanDataFileName));
+            signInManger = new SignInManager(viewModel, Settings.Instance.DataFile);
             signInManger.AllOutConfirmation += ConfirmAllOutCommand;
 
             // Set the window icon to the 
-            Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(Properties.Resources.WindowIconPath, UriKind.Relative)).Stream);
+            Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(Properties.Settings.Default.WindowIconPath, UriKind.Relative)).Stream);
 
             // Set up the sorting for the two collection views
             var sortDesc = new System.ComponentModel.SortDescription("FullName", System.ComponentModel.ListSortDirection.Ascending);
             ((CollectionViewSource)FindResource("CheckedInStudents")).SortDescriptions.Add(sortDesc);
             ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
-
-            viewModel.DisplayTime = Settings.Instance.ClearScanStatusTime;
-            viewModel.ShipDate = Settings.Instance.Ship;
-            viewModel.ShowTimeUntilShip = Settings.Instance.ShowTimeUntilShip;
 
             DataContext = viewModel;
         }
@@ -63,6 +52,16 @@ namespace ChopshopSignin
         void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
             System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
+        }
+
+        //TODO Replace with appropriate command
+        /// <summary>
+        /// Create summary files for hours
+        /// </summary>
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)
+                signInManger.CreateSummaryFiles();
         }
 
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
@@ -80,10 +79,8 @@ namespace ChopshopSignin
         {
             signInManger.Commit();
 
-            //TODO Pull into SignInManager?
-            // Generate the mentor and student summary files
-            //SummaryFile.CreateAllFiles(OutputFolder, Settings.Instance.Kickoff, People.Values, Person.RoleType.Student);
-            //SummaryFile.CreateAllFiles(OutputFolder, Settings.Instance.Kickoff, People.Values, Person.RoleType.Mentor);
+            if (Settings.Instance.CreateSummaryOnExit)
+                signInManger.CreateSummaryFiles();
 
             Dispose();
         }

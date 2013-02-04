@@ -17,6 +17,7 @@ namespace ChopshopSignin
         {
             xmlDataFile = dataFile;
             people = Person.Load(xmlDataFile).ToDictionary(x => x.FullName, x => x);
+            UpdateTotalTime();
         }
 
         public Func<bool> AllOutConfirmation { get; set; }
@@ -30,6 +31,15 @@ namespace ChopshopSignin
                 Person.Save(people.Values, xmlDataFile);
                 changeCount = 0;
             }
+        }
+
+        /// <summary>
+        /// Create CSV files for summarize hours
+        /// </summary>
+        public void CreateSummaryFiles()
+        {
+            SummaryFile.CreateAllFiles(Settings.Instance.OutputFolder, Settings.Instance.Kickoff, people.Values, Person.RoleType.Student);
+            SummaryFile.CreateAllFiles(Settings.Instance.OutputFolder, Settings.Instance.Kickoff, people.Values, Person.RoleType.Mentor);
         }
 
         public void HandleScanData(string scanText)
@@ -213,7 +223,7 @@ namespace ChopshopSignin
             else
                 model.ScanStatus = "Sign everyone out command cancelled";
         }
-
+        
         private void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
         {
             // If the reset current person timer is active and expired

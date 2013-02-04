@@ -148,6 +148,10 @@ namespace ChopshopSignin
         {
             eventList = new EventList();
 
+            DisplayTime = Settings.Instance.ClearScanStatusTime;
+            ShipDate = Settings.Instance.Ship;
+            ShowTimeUntilShip = Settings.Instance.ShowTimeUntilShip;
+
             timer = new Timer(timerInterval);
             timer.Elapsed += ClockTick;
             timer.Enabled = true;
