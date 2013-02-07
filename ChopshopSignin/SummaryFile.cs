@@ -8,6 +8,7 @@ namespace ChopshopSignin
     sealed internal class SummaryFile
     {
         private static readonly double ExcelSecondsDivsor = new TimeSpan(23, 59, 59).TotalSeconds;
+
         public static void CreateSummaryFiles(string outputFolder, IEnumerable<Person> people)
         {
             foreach (var group in people.GroupBy(x => x.Role))
@@ -21,6 +22,32 @@ namespace ChopshopSignin
 
             var hourSummaries = people.ToDictionary(x => x.FullName, x => x.GetTimeSummary());
 
+
+            //var temp = people.Select(x => new { Name = x.LastName + " " + x.FirstName, Summary = x.GetTimeSummary() }).ToList();
+            var temp = people.Select(x => x.GetTimeSummary()
+                                           .Select(y => new { Name = x.LastName + " " + x.FirstName, Day = y.Key, Time = y.Value }))
+                             .SelectMany(x => x)
+                             .Select(x => new
+                                          {
+                                              Name = x.Name,
+                                              Date = x.Day.ToShortDateString(),
+                                              //Time = x.Time.TotalSeconds / ExcelSecondsDivsor,
+                                              Time = (x.Time.Days * 24 + x.Time.Hours) + x.Time.Minutes / 60.0,
+                                              Week = (((x.Day - Settings.Instance.Kickoff).Days) / 7) + 1
+                                          })
+                             .Select(x => string.Format("{0},{1},{2:F1},{3}", x.Name, x.Date, x.Time, x.Week))
+                             .ToList();
+
+
+            var temp2 = new[] { "Name,Date,Hours,Week" }.Concat(temp).ToList();
+
+            System.IO.File.WriteAllLines(fileName, temp2);
+
+            return;
+
+
+
+            #region
             var days = hourSummaries.SelectMany(x => x.Value).Select(x => x.Key).Distinct().OrderBy(x => x).ToList();
 
             // Create the CSV header
@@ -52,7 +79,21 @@ namespace ChopshopSignin
                 fileLines.Add(line.ToString());
             }
 
+            var dayTotals = days.ToDictionary(x => x, x => TimeSpan.Zero);
+
+            foreach (var person in hourSummaries.Values)
+            {
+                foreach (var day in person)
+                    dayTotals[day.Key] = dayTotals[day.Key].Add(day.Value);
+            }
+
+            fileLines.Add(string.Join(",", dayTotals.Select(x => new { Date = x.Key, Time = x.Value })
+                                                    .OrderBy(x => x.Date)
+                                                    .Select(x => x.Time.Hours + (x.Time.Minutes / 60.0))
+                                                    .Select(x => x.ToString("F1"))));
+
             System.IO.File.WriteAllLines(fileName, fileLines);
+            #endregion
         }
 
 
