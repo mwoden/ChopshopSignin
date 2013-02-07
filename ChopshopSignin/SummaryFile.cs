@@ -7,6 +7,55 @@ namespace ChopshopSignin
 {
     sealed internal class SummaryFile
     {
+        private static readonly double ExcelSecondsDivsor = new TimeSpan(23, 59, 59).TotalSeconds;
+        public static void CreateSummaryFiles(string outputFolder, IEnumerable<Person> people)
+        {
+            foreach (var group in people.GroupBy(x => x.Role))
+                CreateSummaryFile(outputFolder, group.Key, group);
+        }
+
+
+        private static void CreateSummaryFile(string outputFolder, Person.RoleType role, IEnumerable<Person> people)
+        {
+            var fileName = System.IO.Path.Combine(outputFolder, string.Format("Hour Summary - {0}s.csv", role.ToString()));
+
+            var hourSummaries = people.ToDictionary(x => x.FullName, x => x.GetTimeSummary());
+
+            var days = hourSummaries.SelectMany(x => x.Value).Select(x => x.Key).Distinct().OrderBy(x => x).ToList();
+
+            // Create the CSV header
+            var header = string.Join(",", new[] { string.Empty, string.Empty }.Concat(days.Select(x => x.ToShortDateString())).Concat(new[] { "Total" }));
+
+            var fileLines = new List<string>(new[] { header });
+
+            foreach (var person in people)
+            {
+                var line = new StringBuilder(person.FullName + ",");
+
+                foreach (var day in days)
+                {
+                    if (hourSummaries[person.FullName].ContainsKey(day))
+                    {
+                        // Compute the hours spent, using tenths of an hour
+                        var hours = hourSummaries[person.FullName][day].Hours + (hourSummaries[person.FullName][day].Minutes / 60.0);
+                        line.AppendFormat("{0:F1},", hours);
+                    }
+                    else
+                        line.Append("0,");
+                }
+
+                // Compute the hours spent, using tenths of an hour
+                var totalTime = hourSummaries[person.FullName].Values.Select(x => x.Hours + (x.Minutes / 60.0)).Sum();
+
+                line.AppendFormat("{0:F1},", totalTime);
+
+                fileLines.Add(line.ToString());
+            }
+
+            System.IO.File.WriteAllLines(fileName, fileLines);
+        }
+
+
         public static void CreateAllFiles(string outputFolder, DateTime kickoff, IEnumerable<Person> people, Person.RoleType role)
         {
             var weekData = people.Where(x => x.Role == role)

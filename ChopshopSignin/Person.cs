@@ -205,8 +205,21 @@ namespace ChopshopSignin
             return weekSummaries;
         }
 
+        public IDictionary<DateTime, TimeSpan> GetTimeSummary()
+        {
+            // Get the person's timestamps and group them by week
+            return Timestamps.OrderBy(x => x.ScanTime)
+                             .GroupBy(x => x.ScanTime.Date)
+                             .ToDictionary(x => x.Key, x => GetDayTotalTime(x));
+        }
+
+        /// <summary>
+        /// Get the total amount of time spent by the person since startTime
+        /// </summary>
         public TimeSpan GetTotalTimeSince(DateTime startTime)
         {
+            //TODO Can replace with helper call?
+
             // Get the person's timestamps and group them by week
             var times = Timestamps.Where(x => x.ScanTime > startTime).OrderBy(x => x.ScanTime).ToList();
 
@@ -214,6 +227,54 @@ namespace ChopshopSignin
             Scan prev = null;
 
             foreach (var scan in times)
+            {
+                // If the scan indicates in
+                if (scan.Direction == Scan.LocationType.In)
+                {
+                    // If the there isn't an in scan already
+                    if (prev == null)
+                    {
+                        // Add it
+                        prev = scan;
+                    }
+                    else
+                    {
+                        var t = new SignInPair(new[] { prev });
+                        pairs.Add(t);
+                        prev = scan;
+                    }
+                }
+                else if (scan.Direction == Scan.LocationType.Out)
+                {
+                    if (prev != null)
+                    {
+                        var t = new SignInPair(new[] { prev, scan });
+                        pairs.Add(t);
+                        prev = null;
+                    }
+                }
+            }
+
+            if (prev != null)
+            {
+                var t = new SignInPair(new[] { prev });
+                pairs.Add(t);
+            }
+
+            return pairs.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.TotalTime()));
+        }
+
+        /// <summary>
+        /// Get the total time spent for a given day
+        /// </summary>
+        /// <param name="scanTimes">A single day's worth of scans</param>
+        /// <returns>The time spent that day</returns>
+        private TimeSpan GetDayTotalTime(IEnumerable<Scan> scanTimes)
+        {
+            var pairs = new List<SignInPair>();
+            Scan prev = null;
+
+            foreach (var scan in scanTimes.OrderBy(x => x.ScanTime))
             {
                 // If the scan indicates in
                 if (scan.Direction == Scan.LocationType.In)
