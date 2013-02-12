@@ -247,9 +247,6 @@ namespace ChopshopSignin
             Person.Save(People.Values, XmlDataFile);
 
             // Generate the mentor and student summary files
-            //SummaryFile.CreateAllFiles(OutputFolder, Settings.Instance.Kickoff, People.Values, Person.RoleType.Student);
-            //SummaryFile.CreateAllFiles(OutputFolder, Settings.Instance.Kickoff, People.Values, Person.RoleType.Mentor);
-
             SummaryFile.CreateSummaryFiles(OutputFolder, People.Values);
 
             Dispose();
