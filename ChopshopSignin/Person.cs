@@ -158,7 +158,7 @@ namespace ChopshopSignin
 
         /// <summary>
         /// Load all the people from the file
-        /// This will make a backup copy in the 'Backup' folder first
+        /// This will make a backup copy in the BackupFolder folder first
         /// </summary>
         public static IEnumerable<Person> Load(string filePath)
         {
@@ -298,8 +298,7 @@ namespace ChopshopSignin
         {
             if (System.IO.File.Exists(originalFilePath))
             {
-                var baseFolder = System.IO.Path.GetDirectoryName(originalFilePath);
-                var backupFolder = System.IO.Path.Combine(baseFolder, "Backup");
+                var backupFolder = System.IO.Path.Combine(Settings.Instance.OutputFolder, Settings.Instance.BackupFolder);
 
                 if (!System.IO.Directory.Exists(backupFolder))
                     System.IO.Directory.CreateDirectory(backupFolder);
@@ -308,7 +307,25 @@ namespace ChopshopSignin
                 var backupFilePath = System.IO.Path.Combine(backupFolder, backupFile);
 
                 System.IO.File.Copy(originalFilePath, backupFilePath);
+
+                // Clean out the backup folder
+                ManageBackupFiles(backupFolder, Settings.Instance.MaxBackupFilesToKeep);
             }
+        }
+
+        /// <summary>
+        /// Manage the backup folder and only keep a certain number of the most recent files. Older ones will be deleted
+        /// </summary>
+        /// <param name="maxFilesKept">The maximum number of files that will be kept. The the newer files will be kept</param>
+        private static void ManageBackupFiles(string backupFolder, int maxFilesKept)
+        {
+            var filesToDelete = System.IO.Directory.EnumerateFiles(backupFolder)
+                                                   .Select(x => new System.IO.FileInfo(x))
+                                                   .OrderByDescending(x => x.CreationTime)
+                                                   .Skip(maxFilesKept);
+
+            foreach (var file in filesToDelete)
+                file.Delete();
         }
 
         /// <summary>

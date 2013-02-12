@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Timers;
 
 namespace ChopshopSignin
 {
@@ -15,7 +16,7 @@ namespace ChopshopSignin
         public string ScanStatus
         {
             get { lock (syncObject) { return m_LastScan; } }
-            set { lock (syncObject) { m_LastScan = value; resetStatusTimer = DateTime.Now + clearStatusTime; FirePropertyChanged("ScanStatus"); } }
+            set { lock (syncObject) { m_LastScan = value; eventList.Set(EventList.Event.ClearDisplayStatus, clearStatusTime); FirePropertyChanged("ScanStatus"); } }
         }
 
         /// <summary>
@@ -143,27 +144,17 @@ namespace ChopshopSignin
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        /// <summary>
-        /// Timer handler for clearing the status
-        /// </summary>
-        public void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
+        public ViewModel()
         {
-            if (resetStatusTimer != null)
-                if (resetStatusTimer < e.SignalTime)
-                {
-                    ScanStatus = string.Empty;
-                    resetStatusTimer = null;
-                }
+            eventList = new EventList();
 
-            if (ShowTimeUntilShip && ShipDate > e.SignalTime)
-            {
-                var timeLeft = ShipDate - DateTime.Now;
+            DisplayTime = Settings.Instance.ClearScanStatusTime;
+            ShipDate = Settings.Instance.Ship;
+            ShowTimeUntilShip = Settings.Instance.ShowTimeUntilShip;
 
-                TimeUntilShip = timeLeft.Days.ToString("F0") + " " + (timeLeft.Days == 1 ? "day" : "days") + " " +
-                                timeLeft.Hours.ToString("F0") + " " + (timeLeft.Hours == 1 ? "hour" : "hours") + " " +
-                                timeLeft.Minutes.ToString("F0") + " " + (timeLeft.Minutes == 1 ? "minute" : "minutes") + " " +
-                                timeLeft.Seconds.ToString("F0") + " " + (timeLeft.Seconds == 1 ? "second" : "seconds");
-            }
+            timer = new Timer(timerInterval);
+            timer.Elapsed += ClockTick;
+            timer.Enabled = true;
         }
 
         /// <summary>
@@ -189,11 +180,37 @@ namespace ChopshopSignin
         private string m_TimeUntilShip = string.Empty;
         private bool m_ShowTimeUntilShip = false;
 
+        private const int timerInterval = 200;
+        private Timer timer;
+
+        private EventList eventList;
+
         // Time that a status message will be displayed
         private TimeSpan clearStatusTime = new TimeSpan(0, 1, 0);
 
-        // Time that indicates when to clear the displayed scan status
-        private DateTime? resetStatusTimer;
+        /// <summary>
+        /// Timer handler for clearing the status
+        /// </summary>
+        private void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            CurrentTime = e.SignalTime;
+
+            if (ShowTimeUntilShip && ShipDate > e.SignalTime)
+            {
+                var timeLeft = ShipDate - DateTime.Now;
+
+                TimeUntilShip = timeLeft.Days.ToString("F0") + " " + (timeLeft.Days == 1 ? "day" : "days") + " " +
+                                timeLeft.Hours.ToString("F0") + " " + (timeLeft.Hours == 1 ? "hour" : "hours") + " " +
+                                timeLeft.Minutes.ToString("F0") + " " + (timeLeft.Minutes == 1 ? "minute" : "minutes") + " " +
+                                timeLeft.Seconds.ToString("F0") + " " + (timeLeft.Seconds == 1 ? "second" : "seconds");
+            }
+
+            if (eventList.HasExpired(EventList.Event.ClearDisplayStatus, e.SignalTime))
+            {
+                ScanStatus = string.Empty;
+                eventList.Clear(EventList.Event.ClearDisplayStatus);
+            }
+        }
 
         private void FirePropertyChanged(string propertyName)
         {
@@ -201,5 +218,26 @@ namespace ChopshopSignin
             if (handler != null)
                 handler(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private bool disposed = false;
+
+        private void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (!disposed)
+                {
+                    disposed = true;
+                    timer.Dispose();
+                    GC.SuppressFinalize(this);
+                }
+            }
+        }
+
     }
 }

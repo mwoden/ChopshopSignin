@@ -59,32 +59,5 @@ namespace ChopshopSignin.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to ScanData.xml.
-        /// </summary>
-        internal static string ScanDataFileName {
-            get {
-                return ResourceManager.GetString("ScanDataFileName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Settings.xml.
-        /// </summary>
-        internal static string SettingsFileName {
-            get {
-                return ResourceManager.GetString("SettingsFileName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to /timeclock-icon.ico.
-        /// </summary>
-        internal static string WindowIconPath {
-            get {
-                return ResourceManager.GetString("WindowIconPath", resourceCulture);
-            }
-        }
     }
 }

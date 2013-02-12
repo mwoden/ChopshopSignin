@@ -58,9 +58,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="EventList.cs" />
     <Compile Include="Person.cs" />
     <Compile Include="Scan.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SignInManager.cs" />
     <Compile Include="SignInOutResult.cs" />
     <Compile Include="SignInPair.cs" />
     <Compile Include="SummaryFile.cs" />
@@ -97,6 +99,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="app.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

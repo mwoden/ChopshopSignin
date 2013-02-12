@@ -49,88 +49,114 @@ namespace ChopshopSignin
         public bool ShowTimeUntilShip { get; private set; }
 
         /// <summary>
+        /// The location of the program
+        /// </summary>
+        public string OutputFolder { get; private set; }
+
+        /// <summary>
+        /// The data file with the scan data
+        /// </summary>
+        public string DataFile { get; private set; }
+
+        /// <summary>
+        /// The folder under OutputFolder where backup data files will be located
+        /// </summary>
+        public string BackupFolder { get; private set; }
+
+        /// <summary>
+        /// Whether the summary outputs will be created every time the program is closed
+        /// </summary>
+        public bool CreateSummaryOnExit { get; private set; }
+
+        /// <summary>
+        /// The maximum number of backup files that will be kept
+        /// </summary>
+        public int MaxBackupFilesToKeep { get; private set; }
+
+        /// <summary>
         /// Static member holding the single instance
         /// </summary>
-        private static readonly Lazy<Settings> lazy = new Lazy<Settings>(() => new Settings(System.Reflection.Assembly.GetExecutingAssembly().Location, Properties.Resources.SettingsFileName));
+        private static readonly Lazy<Settings> lazy = new Lazy<Settings>(() => new Settings(Properties.Settings.Default.SettingsFileName));
 
         /// <summary>
         /// Constructor to set all to default
         /// </summary>
         private Settings()
         {
-            Kickoff = Defaults.Kickoff;
-            Ship = Defaults.Ship;
-            TotalTimeUpdateInterval = Defaults.TotalTimeUpdateInterval;
-            ScanInTimeoutWindow = Defaults.ScanInTimeoutWindow;
-            ScanDataResetTime = Defaults.ScanDataResetTime;
-            ClearScanStatusTime = Defaults.ClearScanStatusTime;
-            ShowTimeUntilShip = Defaults.ShowTimeUntilShip;
-        }
+            OutputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            DataFile = System.IO.Path.Combine(OutputFolder, Properties.Settings.Default.ScanDataFileName);
+            BackupFolder = System.IO.Path.Combine(OutputFolder, Properties.Settings.Default.BackupFolder);
 
+            Kickoff = Enumerable.Range(1, 7)
+                                .Select(x => new DateTime(DateTime.Today.Year, 1, x))
+                                .Single(x => x.DayOfWeek == DayOfWeek.Saturday);
+
+            Ship = Enumerable.Range(1, 7)
+                             .Select(x => Kickoff.AddDays(Properties.Settings.Default.SeasonLengthWeeks * 7).AddDays(x))
+                             .Single(s => s.DayOfWeek == DayOfWeek.Wednesday);
+
+            TotalTimeUpdateInterval = Properties.Settings.Default.TotalTimeUpdateInterval;
+            ScanInTimeoutWindow = Properties.Settings.Default.ScanInTimeoutWindow;
+            ScanDataResetTime = Properties.Settings.Default.ScanDataResetTime;
+            ClearScanStatusTime = Properties.Settings.Default.ClearScanStatusTime;
+            ShowTimeUntilShip = Properties.Settings.Default.ShowTimeUntilShip;
+            BackupFolder = Properties.Settings.Default.BackupFolder;
+            CreateSummaryOnExit = Properties.Settings.Default.CreateSummaryOnExit;
+            MaxBackupFilesToKeep = Properties.Settings.Default.MaxBackupFilesToKeep;
+        }
 
         /// <summary>
         /// Constructor to load settings from a settings file
         /// </summary>
         /// <param name="executingAssembly">The location returned by System.Reflection.Assembly.GetExecutingAssembly().Location</param>
         /// <param name="settingsFile">The settings file name</param>
-        private Settings(string executingAssembly, string settingsFile)
+        private Settings(string settingsFile)
             : this()
         {
-            var folder = System.IO.Path.GetDirectoryName(executingAssembly);
-            var file = System.IO.Path.Combine(folder, settingsFile);
+            var file = System.IO.Path.Combine(OutputFolder, settingsFile);
 
             if (System.IO.File.Exists(file))
             {
-                var settingsData = XElement.Load(file);
-
                 try
                 {
-                    Kickoff = (DateTime?)settingsData.Element("Kickoff") ?? Defaults.Kickoff;
-                    Ship = (DateTime?)settingsData.Element("Ship") ?? Defaults.Ship;
-                    TotalTimeUpdateInterval = (int?)settingsData.Element("TotalTimeUpdateInterval") ?? Defaults.TotalTimeUpdateInterval;
-                    ScanInTimeoutWindow = (int?)settingsData.Element("ScanInTimeoutWindow") ?? Defaults.ScanInTimeoutWindow;
-                    ScanDataResetTime = (int?)settingsData.Element("ScanDataResetTime") ?? Defaults.ScanDataResetTime;
-                    ClearScanStatusTime = (int?)settingsData.Element("ClearScanStatusTime") ?? Defaults.ClearScanStatusTime;
-                    ShowTimeUntilShip = (bool?)settingsData.Element("ShowTimeUntilShip") ?? Defaults.ShowTimeUntilShip;
+                    var settingsData = XElement.Load(file);
+
+                    if ((DateTime?)settingsData.Element("Kickoff") != null)
+                        Kickoff = (DateTime)settingsData.Element("Kickoff");
+
+                    if ((DateTime?)settingsData.Element("Ship") != null)
+                        Ship = (DateTime)settingsData.Element("Ship");
+
+                    BackupFolder = (string)settingsData.Element("BackupFolder") ??
+                                   Properties.Settings.Default.BackupFolder;
+
+                    MaxBackupFilesToKeep = (int?)settingsData.Element("MaxBackupFilesToKeep") ??
+                                           Properties.Settings.Default.MaxBackupFilesToKeep;
+
+
+                    CreateSummaryOnExit = (bool?)settingsData.Element("CreateSummaryOnExit") ??
+                                          Properties.Settings.Default.CreateSummaryOnExit;
+
+                    TotalTimeUpdateInterval = (int?)settingsData.Element("TotalTimeUpdateInterval") ??
+                                               Properties.Settings.Default.TotalTimeUpdateInterval;
+
+                    ScanInTimeoutWindow = (int?)settingsData.Element("ScanInTimeoutWindow") ??
+                                          Properties.Settings.Default.ScanInTimeoutWindow;
+
+                    ScanDataResetTime = (int?)settingsData.Element("ScanDataResetTime") ??
+                                        Properties.Settings.Default.ScanDataResetTime;
+
+                    ClearScanStatusTime = (int?)settingsData.Element("ClearScanStatusTime") ??
+                                          Properties.Settings.Default.ClearScanStatusTime;
+
+                    ShowTimeUntilShip = (bool?)settingsData.Element("ShowTimeUntilShip") ??
+                                        Properties.Settings.Default.ShowTimeUntilShip;
                 }
                 catch (FormatException)
                 {
                     System.Windows.MessageBox.Show("There was an error in the settings file. Please fix it and run the program again", "Error Reading Settings File", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
-        }
-
-
-        /// <summary>
-        /// Number of full weeks in an FRC season
-        /// </summary>
-        private const int SeasonWeeks = 6;
-
-        /// <summary>
-        /// Default values for the adjustable paramters
-        /// </summary>
-        private static class Defaults
-        {
-            // Set kickoff to default to the first Saturday of the year
-            public static DateTime Kickoff { get { return Enumerable.Range(1, 7).Select(x => new DateTime(DateTime.Today.Year, 1, x)).Single(x => x.DayOfWeek == DayOfWeek.Saturday); } }
-
-            // Set the ship default to the first Wednesday that occurs 6 weeks after kickoff
-            public static DateTime Ship { get { return Enumerable.Range(1, 7).Select(x => Kickoff.AddDays(SeasonWeeks * 7).AddDays(x)).Single(s => s.DayOfWeek == DayOfWeek.Wednesday); } }
-
-            // Set the default total time update interval to 5 minutes (300 seconds)
-            public const int TotalTimeUpdateInterval = 300;
-
-            // Set the default scan in window to 10 seconds
-            public const int ScanInTimeoutWindow = 10;
-
-            // Set the default scan data reset time to 3 seconds
-            public const int ScanDataResetTime = 3;
-
-            // Set the default clear scan status time to 60 seconds
-            public const int ClearScanStatusTime = 60;
-
-            // Set the default to display the time left until ship
-            public const bool ShowTimeUntilShip = true;
         }
     }
 }

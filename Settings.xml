@@ -24,4 +24,13 @@
 	<!-- Choose whether or not to show time remaining until ship -->
 	<ShowTimeUntilShip>true</ShowTimeUntilShip>
 	
+	<!-- The subfolder under the program directory where backups will be stored -->
+	<BackupFolder>Backup</BackupFolder>
+	
+	<!-- The maximum number of backup scan data files to keep -->
+	<MaxBackupFilesToKeep>2147483647</MaxBackupFilesToKeep>
+	
+	<!-- Whether the summary CSV files will be created when the program closes -->
+	<CreateSummaryOnExit>false</CreateSummaryOnExit>
+	
 </Settings>
