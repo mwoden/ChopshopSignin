@@ -38,8 +38,7 @@ namespace ChopshopSignin
         /// </summary>
         public void CreateSummaryFiles()
         {
-            SummaryFile.CreateAllFiles(Settings.Instance.OutputFolder, Settings.Instance.Kickoff, people.Values, Person.RoleType.Student);
-            SummaryFile.CreateAllFiles(Settings.Instance.OutputFolder, Settings.Instance.Kickoff, people.Values, Person.RoleType.Mentor);
+            SummaryFile.CreateSummaryFiles(Settings.Instance.OutputFolder, people.Values);
         }
 
         public void HandleScanData(string scanText)

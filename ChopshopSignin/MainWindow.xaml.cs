@@ -81,8 +81,7 @@ namespace ChopshopSignin
 
             if (Settings.Instance.CreateSummaryOnExit)
                 signInManger.CreateSummaryFiles();
-
-            SummaryFile.CreateSummaryFiles(OutputFolder, People.Values);
+                        
             Dispose();
         }
 
