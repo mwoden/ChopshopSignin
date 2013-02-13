@@ -7,35 +7,32 @@ namespace ChopshopSignin
 {
     sealed internal class SummaryFile
     {
-        public static void CreateAllFiles(string outputFolder, DateTime kickoff, IEnumerable<Person> people, Person.RoleType role)
+        public static void CreateSummaryFiles(string outputFolder, IEnumerable<Person> people)
         {
-            var weekData = people.Where(x => x.Role == role)
-                                 .Select(x => x.GetWeekSummaries(kickoff))
-                                 .SelectMany(x => x)
-                                 .Select(x => x.SignInTimes.Select(y => new { FullName = x.FullName, Week = x.Week, Line = y }))
-                                 .SelectMany(x => x)
-                                 .GroupBy(x => x.Week)
-                                 .Select(x => new { Week = x.Key, Lines = x });
-
-            foreach (var week in weekData.OrderBy(_x => _x.Week))
-            {
-                var outputFile = string.Format("{0} - Week {1}.csv", role.ToString(), week.Week);
-                var outputPath = System.IO.Path.Combine(outputFolder, outputFile);
-
-                var fileData = week.Lines.OrderBy(x => x.FullName).Select(x => x.Line).ToArray();
-
-                var temp = GetCsvHeader().Concat(fileData).ToArray();
-                System.IO.File.WriteAllLines(outputPath, temp);
-            }
+            foreach (var group in people.GroupBy(x => x.Role))
+                CreateSummaryFile(outputFolder, group.Key, group);
         }
 
-        private static IEnumerable<string> GetCsvHeader()
+
+        private static void CreateSummaryFile(string outputFolder, Person.RoleType role, IEnumerable<Person> people)
         {
-            return new[]
-                {
-                    ",,Saturday,,Sunday,,Monday,,Tuesday,,Wednesday,,Thursday,,Friday",
-                    ",,In,Out,In,Out,In,Out,In,Out,In,Out,In,Out,In,Out"
-                };
+            var fileName = System.IO.Path.Combine(outputFolder, string.Format("Hour Summary - {0}s.csv", role.ToString()));
+
+            var hourSummaries = people.ToDictionary(x => x.FullName, x => x.GetTimeSummary());
+
+            var fileLines = people.Select(x => x.GetTimeSummary()
+                                                .Select(y => new { Name = x.LastName + " " + x.FirstName, Day = y.Key, Time = y.Value }))
+                                  .SelectMany(x => x)
+                                  .Select(x => new
+                                               {
+                                                   Name = x.Name,
+                                                   Date = x.Day.ToShortDateString(),
+                                                   Time = (x.Time.Days * 24 + x.Time.Hours) + x.Time.Minutes / 60.0,
+                                                   Week = (((x.Day - Settings.Instance.Kickoff).Days) / 7) + 1
+                                               })
+                                  .Select(x => string.Format("{0},{1},{2:F1},{3}", x.Name, x.Date, x.Time, x.Week));
+
+            System.IO.File.WriteAllLines(fileName, new[] { "Name,Date,Hours,Week" }.Concat(fileLines));
         }
     }
 }
