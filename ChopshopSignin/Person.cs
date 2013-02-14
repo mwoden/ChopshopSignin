@@ -134,6 +134,9 @@ namespace ChopshopSignin
             return SignOut();
         }
 
+        /// <summary>
+        /// Serialize the person to XML
+        /// </summary>
         public XElement ToXml()
         {
             return new XElement("Person",
@@ -171,40 +174,6 @@ namespace ChopshopSignin
             return Enumerable.Empty<Person>();
         }
 
-        /// <summary>
-        /// Generates a set of WeekSummary objects to create the csv summary files
-        /// </summary>
-        /// <param name="kickoffData"></param>
-        /// <returns></returns>
-        public IEnumerable<WeekSummary> GetWeekSummaries(DateTime kickoffData)
-        {
-            // Get the person's timestamps and group them by week
-            var weeks = Timestamps.GroupBy(x => (((x.ScanTime.Date - kickoffData).Days) / 7) + 1)
-                                  .Select(x => new { Week = x.Key, WeekScans = SignInPair.GetWeekInOutPairs(x) })
-                                  .ToArray();
-
-            var weekSummaries = new List<WeekSummary>();
-
-            foreach (var week in weeks)
-            {
-                var maxEntries = week.WeekScans.Values.Max(x => x.Count());
-                var rows = Enumerable.Range(0, maxEntries).Select(_ => new List<string>()).ToArray();
-
-                foreach (var index in Enumerable.Range(0, maxEntries))
-                {
-                    foreach (var day in FirstWeek)
-                    {
-                        var t = week.WeekScans[day][index];
-                        rows[index].Add(t.GetCsvString());
-                    }
-                }
-                var weekSum = new WeekSummary(week.Week, FullName, rows.Where(x => x.Any()).Select(x => string.Join(",", new[] { FullName }.Concat(x))).ToArray());
-                weekSummaries.Add(weekSum);
-            }
-
-            return weekSummaries;
-        }
-
         public IDictionary<DateTime, TimeSpan> GetTimeSummary()
         {
             // Get the person's timestamps and group them by week
@@ -218,50 +187,11 @@ namespace ChopshopSignin
         /// </summary>
         public TimeSpan GetTotalTimeSince(DateTime startTime)
         {
-            //TODO Can replace with helper call?
-
-            // Get the person's timestamps and group them by week
-            var times = Timestamps.Where(x => x.ScanTime > startTime).OrderBy(x => x.ScanTime).ToList();
-
-            var pairs = new List<SignInPair>();
-            Scan prev = null;
-
-            foreach (var scan in times)
-            {
-                // If the scan indicates in
-                if (scan.Direction == Scan.LocationType.In)
-                {
-                    // If the there isn't an in scan already
-                    if (prev == null)
-                    {
-                        // Add it
-                        prev = scan;
-                    }
-                    else
-                    {
-                        var t = new SignInPair(new[] { prev });
-                        pairs.Add(t);
-                        prev = scan;
-                    }
-                }
-                else if (scan.Direction == Scan.LocationType.Out)
-                {
-                    if (prev != null)
-                    {
-                        var t = new SignInPair(new[] { prev, scan });
-                        pairs.Add(t);
-                        prev = null;
-                    }
-                }
-            }
-
-            if (prev != null)
-            {
-                var t = new SignInPair(new[] { prev });
-                pairs.Add(t);
-            }
-
-            return pairs.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.TotalTime()));
+            // Returns the total time spent since the start time
+            return Timestamps.Where(x => x.ScanTime > startTime)
+                             .GroupBy(x => x.ScanTime.Date)
+                             .Select(x => GetDayTotalTime(x.OrderBy(y => y.ScanTime)))
+                             .Aggregate(TimeSpan.Zero, (accumulator, x) => accumulator.Add(x));
         }
 
         /// <summary>
