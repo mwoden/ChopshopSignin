@@ -24,6 +24,10 @@ namespace ChopshopSignin
 
         public IList<Person> SignedInPeople { get { return people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In).ToArray(); } }
 
+        /// <summary>
+        /// Determine if any changes have occurred in the scan data file, and if so,
+        /// write the changes to the file
+        /// </summary>
         public void Commit()
         {
             if (changeCount > 0)
@@ -41,6 +45,10 @@ namespace ChopshopSignin
             SummaryFile.CreateSummaryFiles(Settings.Instance.OutputFolder, people.Values);
         }
 
+        /// <summary>
+        /// Handles data passed in from the input, in order to determine what action to take
+        /// </summary>
+        /// <param name="scanText"></param>
         public void HandleScanData(string scanText)
         {
             // If there isn't a scan already in progress, set up the timer to
@@ -57,10 +65,11 @@ namespace ChopshopSignin
                 {
                     // Extract the current scan data
                     var scanData = currentScanData.ToString().Trim();
-                    currentScanData = new StringBuilder();
 
-                    // Disable the reset scan timer
+                    // Disable the reset scan timer and reset the incoming
+                    // scan data for the next scan
                     eventList.Clear(EventList.Event.ResetCurrentScan);
+                    currentScanData = new StringBuilder();
 
                     // Determine if a command was scanned
                     var command = ParseCommand(scanData);
@@ -72,7 +81,7 @@ namespace ChopshopSignin
                             // If a person was already scanned (selected)
                             if (currentPerson != null)
                             {
-                                // Reset the scan in/out timeout window
+                                // Set up the scan in/out timeout window
                                 eventList.Set(EventList.Event.ResetCurrentPerson, ScanInOutTimeout);
 
                                 // Check the sign-in result
@@ -107,6 +116,8 @@ namespace ChopshopSignin
                             break;
 
                         // Non-command scan, store the data in the current scan
+                        // This depends on the name pattern matching to detect
+                        // if the scan is garbage, or a person
                         case ScanCommand.NoCommmand:
                         default:
                             var newPerson = Person.Create(scanData);
@@ -137,6 +148,15 @@ namespace ChopshopSignin
 
         private SignInManager()
         {
+            // Events not defined in this dictionary will result in ignoring that event
+            eventHandler = new Dictionary<EventList.Event, Action>()
+            { 
+                { EventList.Event.ResetCurrentPerson, ResetCurrentPersonEventTimeout },
+                { EventList.Event.ResetCurrentScan, ResetCurrentScanEventTimeout },
+                { EventList.Event.UpdateTotalTime, UpdateTotalTimeEventTimeout },
+                // ClearDisplayStatus note used in SignInManager
+            };
+
             eventList = new EventList();
 
             currentScanData = new StringBuilder();
@@ -164,6 +184,9 @@ namespace ChopshopSignin
         // Dictionary for determining who is currently signed in
         private readonly Dictionary<string, Person> people;
 
+        // Dictionary to handle events
+        private readonly Dictionary<EventList.Event, Action> eventHandler;
+
         private const int timerInterval = 200;
         private readonly Timer timer;
 
@@ -173,6 +196,9 @@ namespace ChopshopSignin
         private StringBuilder currentScanData;
         private Person currentPerson;
         private string xmlDataFile;
+
+        // Indicates that the object has already been disposed
+        private bool disposed = false;
 
         private readonly object syncObject = new object();
 
@@ -222,33 +248,17 @@ namespace ChopshopSignin
             else
                 model.ScanStatus = "Sign everyone out command cancelled";
         }
-        
+
+        /// <summary>
+        /// Every time the timer fires, the evenHandler list will be enumerated and
+        /// each event will be checked to see if it expired. If it did expire, the
+        /// event handler for that event will be run
+        /// </summary>
         private void ClockTick(object sender, System.Timers.ElapsedEventArgs e)
         {
-            // If the reset current person timer is active and expired
-            if (eventList.HasExpired(EventList.Event.ResetCurrentPerson, e.SignalTime))
-                // This shouldn't be needed, since the timer should only be set if a person was scanned
-                if (currentPerson != null)
-                {
-                    currentPerson = null;
-                    model.ScanStatus = "You waited too long, please re-scan your name";
-                }
-
-            // If the reset scan timer has expired
-            if (eventList.HasExpired(EventList.Event.ResetCurrentScan, e.SignalTime))
-                // Clear the current scan data
-                lock (syncObject)
-                    currentScanData = new StringBuilder();
-
-            // If the update total time timer has expired
-            if (eventList.HasExpired(EventList.Event.UpdateTotalTime, e.SignalTime))
-            {
-                // Update the total time displayed
-                UpdateTotalTime();
-
-                // Schedule another update
-                eventList.Set(EventList.Event.UpdateTotalTime, UpdateTotalTimeTimeout);
-            }
+            foreach (var currentEvent in eventHandler.Keys)
+                if (eventList.HasExpired(currentEvent, e.SignalTime))
+                    eventHandler[currentEvent]();
         }
 
         /// <summary>
@@ -270,13 +280,51 @@ namespace ChopshopSignin
             }
         }
 
+        /// <summary>
+        /// Handles when the ResetCurrentPerson even expires and the currently selected
+        /// person needs to be reset
+        /// </summary>
+        private void ResetCurrentPersonEventTimeout()
+        {
+            currentPerson = null;
+            model.ScanStatus = "You waited too long, please re-scan your name";
+        }
+
+        /// <summary>
+        /// Handles when the ResetCurrentScan event expires and the current
+        /// scan data needs to be reset
+        /// </summary>
+        private void ResetCurrentScanEventTimeout()
+        {
+            lock (syncObject)
+                currentScanData = new StringBuilder();
+        }
+
+        /// <summary>
+        /// Handles when the UpdateTotalTime event expires and the total
+        /// time displayed has to be updated
+        /// </summary>
+        private void UpdateTotalTimeEventTimeout()
+        {
+            // Update the total time displayed
+            UpdateTotalTime();
+
+            // Schedule another update
+            eventList.Set(EventList.Event.UpdateTotalTime, UpdateTotalTimeTimeout);
+        }
+
+        /// <summary>
+        /// Allows the release of the system resources used by the object
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
         }
 
-        private bool disposed = false;
-
+        /// <summary>
+        /// Internal dispose function to handle cleaning up the object
+        /// </summary>
+        /// <param name="disposing">Indicates that the dispose operation is called from a user dispose</param>
         private void Dispose(bool disposing)
         {
             if (disposing)
