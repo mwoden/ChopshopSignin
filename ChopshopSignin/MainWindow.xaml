@@ -11,9 +11,7 @@
         
         TextInput="Window_TextInput"
         Loaded="Window_Loaded"
-        Closed="Window_Closed"        
-        PreviewKeyDown="Window_PreviewKeyDown"
-        >
+        Closed="Window_Closed">
     <Window.Resources>
 
         <BitmapImage x:Key="TeamLogo" UriSource="/ChopShopLogo.jpg"/>
@@ -22,6 +20,16 @@
         <CollectionViewSource x:Key="CheckedInMentors" Source="{Binding Path=CheckedIn}" Filter="Mentor_Filter"/>
 
     </Window.Resources>
+
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Sign All Out" Click="SignAllOut_Click"/>
+            <MenuItem Header="Create Summary Data Files" Click="CreateSummary_Click"/>
+            <Separator/>
+            <MenuItem Header="Exit" Click="Exit_Click"/>
+        </ContextMenu>
+    </Window.ContextMenu>
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="4*"/>
@@ -120,7 +128,7 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </GroupBox.Style>                
+                </GroupBox.Style>
                 <GroupBox.Header>
                     <TextBlock FontSize="22">Time Until Ship</TextBlock>
                 </GroupBox.Header>

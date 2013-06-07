@@ -24,6 +24,8 @@ namespace ChopshopSignin
 
         public IList<Person> SignedInPeople { get { return people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In).ToArray(); } }
 
+        public bool AnySignedIn { get { return people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In).Any(); } }
+
         /// <summary>
         /// Determine if any changes have occurred in the scan data file, and if so,
         /// write the changes to the file
@@ -146,6 +148,34 @@ namespace ChopshopSignin
             }
         }
 
+        /// <summary>
+        /// Find anyone signed in and sign them out
+        /// </summary>
+        public void SignAllOut()
+        {
+            var confirmAllOutCmd = AllOutConfirmation;
+
+            if (confirmAllOutCmd == null)
+                throw new NullReferenceException("AllOutConfirmation never set to confirmation function");
+
+            // Sign out all signed in users at the current time
+            if (confirmAllOutCmd())
+            {
+                var remaining = people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In);
+                var status = string.Format("Signed out all {0} remaining at {1}", remaining.Count(), DateTime.Now.ToShortTimeString());
+
+                changeCount += remaining.Count();
+
+                foreach (var person in remaining)
+                    person.SignInOrOut(false);
+
+                model.ScanStatus = status;
+                model.UpdateCheckedInList(people.Values);
+            }
+            else
+                model.ScanStatus = "Sign everyone out command cancelled";
+        }
+
         private SignInManager()
         {
             // Events not defined in this dictionary will result in ignoring that event
@@ -218,35 +248,6 @@ namespace ChopshopSignin
                 return ScanCommand.NoCommmand;
 
             return result;
-        }
-
-        /// <summary>
-        /// Find anyone signed in and sign them out
-        /// </summary>
-        /// <returns>Result with status and display string</returns>
-        private void SignAllOut()
-        {
-            var confirmAllOutCmd = AllOutConfirmation;
-
-            if (confirmAllOutCmd == null)
-                throw new NullReferenceException("AllOutConfirmation never set to confirmation function");
-
-            // Sign out all signed in users at the current time
-            if (confirmAllOutCmd())
-            {
-                var remaining = people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In);
-                var status = string.Format("Signed out all {0} remaining at {1}", remaining.Count(), DateTime.Now.ToShortTimeString());
-
-                changeCount += remaining.Count();
-
-                foreach (var person in remaining)
-                    person.SignInOrOut(false);
-
-                model.ScanStatus = status;
-                model.UpdateCheckedInList(people.Values);
-            }
-            else
-                model.ScanStatus = "Sign everyone out command cancelled";
         }
 
         /// <summary>

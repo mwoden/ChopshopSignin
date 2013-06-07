@@ -54,16 +54,6 @@ namespace ChopshopSignin
             System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
         }
 
-        //TODO Replace with appropriate command
-        /// <summary>
-        /// Create summary files for hours
-        /// </summary>
-        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)
-                signInManger.CreateSummaryFiles();
-        }
-
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
         {
             signInManger.HandleScanData(e.Text);
@@ -81,7 +71,7 @@ namespace ChopshopSignin
 
             if (Settings.Instance.CreateSummaryOnExit)
                 signInManger.CreateSummaryFiles();
-                        
+
             Dispose();
         }
 
@@ -137,6 +127,30 @@ namespace ChopshopSignin
                 return true;
 
             return false;
+        }
+
+        /// <summary>
+        /// Handler for creating the hour summary files
+        /// </summary>
+        private void CreateSummary_Click(object sender, RoutedEventArgs e)
+        {
+            signInManger.CreateSummaryFiles();
+        }
+
+        /// <summary>
+        /// Handler for signing out all signed-in people
+        /// </summary>
+        private void SignAllOut_Click(object sender, RoutedEventArgs e)
+        {
+            signInManger.SignAllOut();
+        }
+
+        /// <summary>
+        /// Handler for using the Exit menu item
+        /// </summary>
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }
