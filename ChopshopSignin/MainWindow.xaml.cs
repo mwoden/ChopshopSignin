@@ -24,6 +24,10 @@ namespace ChopshopSignin
         private readonly ViewModel viewModel;
         private readonly SignInManager signInManger;
 
+        public static RoutedCommand SignOutAllCommand = new RoutedCommand("Sign Everyone Out", typeof(MainWindow));
+        public static RoutedCommand CreateSummaryCommand = new RoutedCommand("Create Summary Data Files", typeof(MainWindow));
+        public static RoutedCommand ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
+
         public MainWindow()
         {
             InitializeComponent();
@@ -42,6 +46,10 @@ namespace ChopshopSignin
             var sortDesc = new System.ComponentModel.SortDescription("FullName", System.ComponentModel.ListSortDirection.Ascending);
             ((CollectionViewSource)FindResource("CheckedInStudents")).SortDescriptions.Add(sortDesc);
             ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
+
+            SignOutAllCommand.InputGestures.Add(new KeyGesture(Key.O, ModifierKeys.Control | ModifierKeys.Shift));
+            CreateSummaryCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control));
+            ExitCommand.InputGestures.Add(new KeyGesture(Key.W, ModifierKeys.Control));
 
             DataContext = viewModel;
         }
@@ -130,14 +138,6 @@ namespace ChopshopSignin
         }
 
         /// <summary>
-        /// Handler for creating the hour summary files
-        /// </summary>
-        private void CreateSummary_Click(object sender, RoutedEventArgs e)
-        {
-            signInManger.CreateSummaryFiles();
-        }
-
-        /// <summary>
         /// Handler for signing out all signed-in people
         /// </summary>
         private void SignAllOut_Click(object sender, RoutedEventArgs e)
@@ -145,10 +145,32 @@ namespace ChopshopSignin
             signInManger.SignAllOut();
         }
 
-        /// <summary>
-        /// Handler for using the Exit menu item
-        /// </summary>
-        private void Exit_Click(object sender, RoutedEventArgs e)
+        private void SignOutAllCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = signInManger.AnySignedIn;
+        }
+
+        private void SignOutAllCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            signInManger.SignAllOut();
+        }
+
+        private void CreateSummaryCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void CreateSummaryCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            signInManger.CreateSummaryFiles();
+        }
+
+        private void ExitCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void ExitCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             Close();
         }

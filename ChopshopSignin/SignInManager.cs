@@ -22,9 +22,12 @@ namespace ChopshopSignin
 
         public Func<bool> AllOutConfirmation { get; set; }
 
-        public IList<Person> SignedInPeople { get { return people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In).ToArray(); } }
+        public IList<Person> SignedInPeople { get { return SignedIn.ToArray(); } }
 
-        public bool AnySignedIn { get { return people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In).Any(); } }
+        /// <summary>
+        /// True if there is at least one person signed in
+        /// </summary>
+        public bool AnySignedIn { get { return SignedIn.Any(); } }
 
         /// <summary>
         /// Determine if any changes have occurred in the scan data file, and if so,
@@ -236,6 +239,11 @@ namespace ChopshopSignin
         /// The current command to execute based on the scan data
         /// </summary>
         private enum ScanCommand { NoCommmand, In, Out, AllOutNow }
+
+        /// <summary>
+        /// People currently signed in
+        /// </summary>
+        private IEnumerable<Person> SignedIn { get { return people.Values.Where(x => x.CurrentLocation == Scan.LocationType.In); } }
 
         /// <summary>
         /// Parse the string into the appropriate command
