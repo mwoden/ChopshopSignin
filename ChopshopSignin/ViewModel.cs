@@ -102,8 +102,7 @@ namespace ChopshopSignin
         /// </summary>
         public DateTime ShipDate
         {
-            get { return m_ShipDate; }
-            set { m_ShipDate = value; FirePropertyChanged("ShipDate"); }
+            get { return Utility.Ship; }
         }
 
         /// <summary>
@@ -120,8 +119,7 @@ namespace ChopshopSignin
         /// </summary>
         public bool ShowTimeUntilShip
         {
-            get { return m_ShowTimeUntilShip; }
-            set { m_ShowTimeUntilShip = value; FirePropertyChanged("ShowTimeUntilShip"); }
+            get { return Properties.Settings.Default.ShowTimeUntilShip; }
         }
 
         /// <summary>
@@ -148,23 +146,24 @@ namespace ChopshopSignin
         {
             eventList = new EventList();
 
-            DisplayTime = Settings.Instance.ClearScanStatusTime;
-            ShipDate = Settings.Instance.Ship;
-            ShowTimeUntilShip = Settings.Instance.ShowTimeUntilShip;
+            clearStatusTime = TimeSpan.FromSeconds(Properties.Settings.Default.ClearScanStatusTime);
 
             timer = new Timer(timerInterval);
             timer.Elapsed += ClockTick;
             timer.Enabled = true;
+
+            Properties.Settings.Default.PropertyChanged += Default_PropertyChanged;
         }
 
-        /// <summary>
-        /// The length of time the scan status message will be displayed, in seconds.
-        /// The default is one minue.
-        /// </summary>
-        public int DisplayTime
+        void Default_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            get { return (int)clearStatusTime.TotalSeconds; }
-            set { clearStatusTime = TimeSpan.FromSeconds(value); }
+            switch (e.PropertyName)
+            {
+                case "ClearScanStatusTime":
+                    clearStatusTime = TimeSpan.FromSeconds(Properties.Settings.Default.ClearScanStatusTime);
+                    break;
+            }
+            FirePropertyChanged(null);
         }
 
         private object syncObject = new object();
@@ -178,7 +177,6 @@ namespace ChopshopSignin
         private DateTime m_OldestTime = DateTime.Now;
         private DateTime m_ShipDate = DateTime.MinValue;
         private string m_TimeUntilShip = string.Empty;
-        private bool m_ShowTimeUntilShip = false;
 
         private const int timerInterval = 200;
         private Timer timer;

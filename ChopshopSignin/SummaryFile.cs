@@ -28,7 +28,7 @@ namespace ChopshopSignin
                                                    Name = x.Name,
                                                    Date = x.Day.ToShortDateString(),
                                                    Time = (x.Time.Days * 24 + x.Time.Hours) + x.Time.Minutes / 60.0,
-                                                   Week = (((x.Day - Settings.Instance.Kickoff).Days) / 7) + 1
+                                                   Week = (((x.Day - Utility.Kickoff).Days) / 7) + 1
                                                })
                                   .Select(x => string.Format("{0},{1},{2:F1},{3}", x.Name, x.Date, x.Time, x.Week));
 

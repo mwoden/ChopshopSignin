@@ -27,6 +27,7 @@ namespace ChopshopSignin
         public static RoutedCommand SignOutAllCommand = new RoutedCommand("Sign Everyone Out", typeof(MainWindow));
         public static RoutedCommand CreateSummaryCommand = new RoutedCommand("Create Summary Data Files", typeof(MainWindow));
         public static RoutedCommand ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
+        public static RoutedCommand SettingsCommand = new RoutedCommand("Settings", typeof(MainWindow));
 
         public MainWindow()
         {
@@ -36,7 +37,7 @@ namespace ChopshopSignin
 
             viewModel = new ViewModel();
 
-            signInManger = new SignInManager(viewModel, Settings.Instance.DataFile);
+            signInManger = new SignInManager(viewModel, Utility.DataFile);
             signInManger.AllOutConfirmation += ConfirmAllOutCommand;
 
             // Set the window icon to the 
@@ -50,6 +51,7 @@ namespace ChopshopSignin
             SignOutAllCommand.InputGestures.Add(new KeyGesture(Key.O, ModifierKeys.Control | ModifierKeys.Shift));
             CreateSummaryCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control));
             ExitCommand.InputGestures.Add(new KeyGesture(Key.W, ModifierKeys.Control));
+            SettingsCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control | ModifierKeys.Shift));
 
             DataContext = viewModel;
         }
@@ -77,7 +79,7 @@ namespace ChopshopSignin
         {
             signInManger.Commit();
 
-            if (Settings.Instance.CreateSummaryOnExit)
+            if (Properties.Settings.Default.CreateSummaryOnExit)
                 signInManger.CreateSummaryFiles();
 
             Dispose();
@@ -173,6 +175,17 @@ namespace ChopshopSignin
         private void ExitCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             Close();
+        }
+
+        private void SettingsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void SettingsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            new SettingsWindow().ShowDialog();
+
         }
     }
 }

@@ -289,7 +289,7 @@ namespace ChopshopSignin
         {
             if (System.IO.File.Exists(originalFilePath))
             {
-                var backupFolder = System.IO.Path.Combine(Settings.Instance.OutputFolder, Settings.Instance.BackupFolder);
+                var backupFolder = System.IO.Path.Combine(Utility.OutputFolder, Properties.Settings.Default.BackupFolder);
 
                 if (!System.IO.Directory.Exists(backupFolder))
                     System.IO.Directory.CreateDirectory(backupFolder);
@@ -300,7 +300,7 @@ namespace ChopshopSignin
                 System.IO.File.Copy(originalFilePath, backupFilePath);
 
                 // Clean out the backup folder
-                ManageBackupFiles(backupFolder, Settings.Instance.MaxBackupFilesToKeep);
+                ManageBackupFiles(backupFolder, Properties.Settings.Default.MaxBackupFilesToKeep);
             }
         }
 

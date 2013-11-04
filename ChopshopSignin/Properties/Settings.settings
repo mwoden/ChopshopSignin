@@ -2,19 +2,19 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ChopshopSignin.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="TotalTimeUpdateInterval" Type="System.Int32" Scope="Application">
+    <Setting Name="TotalTimeUpdateInterval" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">300</Value>
     </Setting>
-    <Setting Name="ScanInTimeoutWindow" Type="System.Int32" Scope="Application">
+    <Setting Name="ScanInTimeoutWindow" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">10</Value>
     </Setting>
-    <Setting Name="ScanDataResetTime" Type="System.Int32" Scope="Application">
+    <Setting Name="ScanDataResetTime" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">3</Value>
     </Setting>
-    <Setting Name="ClearScanStatusTime" Type="System.Int32" Scope="Application">
+    <Setting Name="ClearScanStatusTime" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">60</Value>
     </Setting>
-    <Setting Name="ShowTimeUntilShip" Type="System.Boolean" Scope="Application">
+    <Setting Name="ShowTimeUntilShip" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="SettingsFileName" Type="System.String" Scope="Application">
@@ -32,10 +32,10 @@
     <Setting Name="BackupFolder" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Backup</Value>
     </Setting>
-    <Setting Name="CreateSummaryOnExit" Type="System.Boolean" Scope="Application">
+    <Setting Name="CreateSummaryOnExit" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="MaxBackupFilesToKeep" Type="System.Int32" Scope="Application">
+    <Setting Name="MaxBackupFilesToKeep" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">2147483647</Value>
     </Setting>
   </Settings>

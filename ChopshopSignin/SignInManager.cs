@@ -47,7 +47,7 @@ namespace ChopshopSignin
         /// </summary>
         public void CreateSummaryFiles()
         {
-            SummaryFile.CreateSummaryFiles(Settings.Instance.OutputFolder, people.Values);
+            SummaryFile.CreateSummaryFiles(Utility.OutputFolder, people.Values);
         }
 
         /// <summary>
@@ -193,9 +193,9 @@ namespace ChopshopSignin
             eventList = new EventList();
 
             currentScanData = new StringBuilder();
-            ScanInOutTimeout = TimeSpan.FromSeconds(Settings.Instance.ScanInTimeoutWindow);
-            ResetScanDataTimeout = TimeSpan.FromSeconds(Settings.Instance.ScanDataResetTime);
-            UpdateTotalTimeTimeout = TimeSpan.FromSeconds(Settings.Instance.TotalTimeUpdateInterval);
+            ScanInOutTimeout = TimeSpan.FromSeconds(Properties.Settings.Default.ScanInTimeoutWindow);
+            ResetScanDataTimeout = TimeSpan.FromSeconds(Properties.Settings.Default.ScanDataResetTime);
+            UpdateTotalTimeTimeout = TimeSpan.FromSeconds(Properties.Settings.Default.TotalTimeUpdateInterval);
 
             timer = new Timer(timerInterval);
             timer.Elapsed += ClockTick;
@@ -285,7 +285,7 @@ namespace ChopshopSignin
                 model.OldestTime = people.Values.Where(x => x.Timestamps.Any()).SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
 
                 // Total up all the time
-                model.TotalTime = people.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Settings.Instance.Kickoff)));
+                model.TotalTime = people.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Utility.Kickoff)));
             }
         }
 

@@ -7,7 +7,8 @@
         xmlns:local="clr-namespace:ChopshopSignin"
         Title="ChopShop Sign-in App"
         Width="1920" Height="1080"
-        WindowState="Maximized"
+        
+        WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         
         FocusManager.FocusedElement="{Binding RelativeSource={x:Static RelativeSource.Self}, Mode=OneTime}"
@@ -15,6 +16,8 @@
         TextInput="Window_TextInput"
         Loaded="Window_Loaded"
         Closed="Window_Closed">
+
+    <!--WindowState="Maximized"-->
     <Window.Resources>
 
         <BitmapImage x:Key="TeamLogo" UriSource="/ChopShopLogo.jpg"/>
@@ -34,12 +37,17 @@
         <CommandBinding Command="{x:Static local:MainWindow.ExitCommand}"
                         Executed="ExitCommand_Executed"
                         CanExecute="ExitCommand_CanExecute"/>
+        <CommandBinding Command="{x:Static local:MainWindow.SettingsCommand}"
+                        Executed="SettingsCommand_Executed"
+                        CanExecute="SettingsCommand_CanExecute"/>        
     </Window.CommandBindings>
 
     <Window.ContextMenu>
         <ContextMenu>
             <MenuItem Command="{x:Static local:MainWindow.SignOutAllCommand}" Header="{Binding Source={x:Static local:MainWindow.SignOutAllCommand}, Path=Name}"/>
             <MenuItem Command="{x:Static local:MainWindow.CreateSummaryCommand}" Header="{Binding Source={x:Static local:MainWindow.CreateSummaryCommand}, Path=Name}"/>
+            <Separator/>
+            <MenuItem Command="{x:Static local:MainWindow.SettingsCommand}" Header="{Binding Source={x:Static local:MainWindow.SettingsCommand}, Path=Name}"/>
             <Separator/>
             <MenuItem Command="{x:Static local:MainWindow.ExitCommand}" Header="{Binding Source={x:Static local:MainWindow.ExitCommand}, Path=Name}"/>
         </ContextMenu>
