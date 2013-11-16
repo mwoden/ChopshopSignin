@@ -187,7 +187,7 @@ namespace ChopshopSignin
                 { EventList.Event.ResetCurrentPerson, ResetCurrentPersonEventTimeout },
                 { EventList.Event.ResetCurrentScan, ResetCurrentScanEventTimeout },
                 { EventList.Event.UpdateTotalTime, UpdateTotalTimeEventTimeout },
-                // ClearDisplayStatus note used in SignInManager
+                // ClearDisplayStatus not used in SignInManager
             };
 
             eventList = new EventList();
@@ -197,9 +197,33 @@ namespace ChopshopSignin
             ResetScanDataTimeout = TimeSpan.FromSeconds(Properties.Settings.Default.ScanDataResetTime);
             UpdateTotalTimeTimeout = TimeSpan.FromSeconds(Properties.Settings.Default.TotalTimeUpdateInterval);
 
+            Properties.Settings.Default.PropertyChanged += SettingChanged;
+
             timer = new Timer(timerInterval);
             timer.Elapsed += ClockTick;
             timer.Enabled = true;
+        }
+
+        void SettingChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            var settings = (ChopshopSignin.Properties.Settings)sender;
+            switch (e.PropertyName)
+            {
+                case "ScanInTimeoutWindow":
+                    ScanInOutTimeout = TimeSpan.FromDays(settings.ScanInTimeoutWindow);
+                    break;
+
+                case "ScanDataResetTime":
+                    ResetScanDataTimeout = TimeSpan.FromSeconds(settings.ScanDataResetTime);
+                    break;
+
+                case "TotalTimeUpdateInterval":
+                    UpdateTotalTimeTimeout = TimeSpan.FromSeconds(settings.TotalTimeUpdateInterval);
+                    // For this case, clear the event scheduled and update the time now, rescheduling it also
+                    eventList.Clear(EventList.Event.UpdateTotalTime);
+                    UpdateTotalTime();
+                    break;
+            }
         }
 
         private SignInManager(ViewModel externalModel)
@@ -211,9 +235,9 @@ namespace ChopshopSignin
 
         private readonly ViewModel model;
         private readonly EventList eventList;
-        private readonly TimeSpan ScanInOutTimeout;
-        private readonly TimeSpan ResetScanDataTimeout;
-        private readonly TimeSpan UpdateTotalTimeTimeout;
+        private TimeSpan ScanInOutTimeout;
+        private TimeSpan ResetScanDataTimeout;
+        private TimeSpan UpdateTotalTimeTimeout;
         // Dictionary for determining who is currently signed in
         private readonly Dictionary<string, Person> people;
 

@@ -1,4 +1,4 @@
-﻿<!-- Width and Height are set to the resolution of the computers in 124. This
+﻿<!-- Width and Height are set to the resolution of the attendance computer scree. This
      is to ensure that development on large monitors will use the correct size. -->
 <Window x:Class="ChopshopSignin.MainWindow"
         x:ClassModifier="internal"
@@ -6,8 +6,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ChopshopSignin"
         Title="ChopShop Sign-in App"
-        Width="1920" Height="1080"
-        
+        Width="1280" Height="1024"
+                
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         
@@ -25,6 +25,10 @@
         <CollectionViewSource x:Key="CheckedInStudents" Source="{Binding Path=CheckedIn}" Filter="Student_Filter"/>
         <CollectionViewSource x:Key="CheckedInMentors" Source="{Binding Path=CheckedIn}" Filter="Mentor_Filter"/>
 
+        <Style x:Key="SignedInNameStyle" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+        
     </Window.Resources>
 
     <Window.CommandBindings>
@@ -39,7 +43,7 @@
                         CanExecute="ExitCommand_CanExecute"/>
         <CommandBinding Command="{x:Static local:MainWindow.SettingsCommand}"
                         Executed="SettingsCommand_Executed"
-                        CanExecute="SettingsCommand_CanExecute"/>        
+                        CanExecute="SettingsCommand_CanExecute"/>
     </Window.CommandBindings>
 
     <Window.ContextMenu>
@@ -55,8 +59,8 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="4*"/>
             <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0">
@@ -66,15 +70,16 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="{Binding CurrentTimeString}" TextWrapping="Wrap" TextAlignment="Center"
+            <TextBlock Grid.Row="0" TextWrapping="Wrap" TextAlignment="Center"
                         HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                        FontWeight="Bold" FontSize="132"/>
+                        FontWeight="Bold" FontSize="72">Fri Nov 15, 2013 10:03:31 PM</TextBlock>
+
 
             <Image Grid.Row="1" Margin="5" Source="{StaticResource ResourceKey=TeamLogo}"/>
 
             <TextBlock Grid.Row="2" Text="{Binding Path=ScanStatus}" TextWrapping="Wrap" TextAlignment="Center"
                        HorizontalAlignment="Stretch" VerticalAlignment="Center"                    
-                       FontWeight="Bold" FontSize="60"/>
+                       FontWeight="Bold" FontSize="48"/>
         </Grid>
 
         <Grid Grid.Column="1">
@@ -87,14 +92,15 @@
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <GroupBox Grid.Row="0" Grid.Column="0" TextElement.FontSize="18">
                 <GroupBox.Header>
-                    <TextBlock FontSize="22" Text="{Binding Path=StudentListHeader}"/>
+                    <TextBlock FontSize="22">Students</TextBlock>
                 </GroupBox.Header>
                 <ItemsControl ItemsSource="{Binding Source={StaticResource ResourceKey=CheckedInStudents}}" Grid.IsSharedSizeScope="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid>
@@ -103,21 +109,22 @@
                                     <ColumnDefinition Width="Auto" SharedSizeGroup="Time"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="{Binding Path=FullName}"/>
-                                <TextBlock Grid.Column="1" TextAlignment="Right" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
+                                <TextBlock Grid.Column="0" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=FullName}"/>
+                                <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" FontSize="12" TextAlignment="Right" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
 
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+
             </GroupBox>
 
             <GroupBox Grid.Row="0" Grid.Column="1" TextElement.FontSize="18">
                 <GroupBox.Header>
-                    <TextBlock FontSize="22" Text="{Binding Path=MentorListHeader}"/>
+                    <TextBlock FontSize="22">Mentors</TextBlock>
                 </GroupBox.Header>
                 <ItemsControl ItemsSource="{Binding Source={StaticResource ResourceKey=CheckedInMentors}}" Grid.IsSharedSizeScope="True"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid>
@@ -126,8 +133,8 @@
                                     <ColumnDefinition Width="Auto" SharedSizeGroup="Time"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="{Binding Path=FullName}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
+                                <TextBlock Grid.Column="0" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=FullName}"/>
+                                <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
 
                             </Grid>
                         </DataTemplate>
@@ -135,14 +142,22 @@
                 </ItemsControl>
             </GroupBox>
 
-            <GroupBox Grid.Row="1" Grid.ColumnSpan="2" TextElement.FontSize="28">
+            <Border Grid.Row="1" Grid.Column="0" BorderThickness="2">
+                <TextBlock FontSize="22" Background="LightGray" TextAlignment="Center" Text="{Binding Path=StudentsSignedIn}"/>
+            </Border>
+
+            <Border Grid.Row="1" Grid.Column="1" BorderThickness="2">
+                <TextBlock FontSize="22" Background="LightGray" TextAlignment="Center" Text="{Binding Path=MentorsSignedIn}"/>
+            </Border>
+            
+            <GroupBox Grid.Row="2" Grid.ColumnSpan="2" TextElement.FontSize="28">
                 <GroupBox.Header>
                     <TextBlock FontSize="22" Text="{Binding Path=TimeSpentHeader}"/>
                 </GroupBox.Header>
                 <TextBlock TextAlignment="Center" Text="{Binding Path=TotalTimeString}"/>
             </GroupBox>
 
-            <GroupBox Grid.Row="2" Grid.ColumnSpan="2" TextElement.FontSize="28">
+            <GroupBox Grid.Row="3" Grid.ColumnSpan="2" TextElement.FontSize="28">
                 <GroupBox.Style>
                     <Style TargetType="{x:Type GroupBox}">
                         <Style.Triggers>

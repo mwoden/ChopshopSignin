@@ -37,21 +37,21 @@ namespace ChopshopSignin
         }
 
         /// <summary>
-        /// The header for the student list, with the number of signed in students
+        /// The number of signed in students
         /// </summary>
-        public string StudentListHeader
+        public int StudentsSignedIn
         {
-            get { lock (syncObject) { return m_StudentListHeader; } }
-            set { lock (syncObject) { m_StudentListHeader = value; FirePropertyChanged("StudentListHeader"); } }
+            get { lock (syncObject) { return m_StudentsSignedIn; } }
+            set { lock (syncObject) { m_StudentsSignedIn = value; FirePropertyChanged("StudentsSignedIn"); } }
         }
 
         /// <summary>
-        /// The header for the mentor list, with the number of signed in mentorss
+        /// The number of signed in mentorss
         /// </summary>
-        public string MentorListHeader
+        public int MentorsSignedIn
         {
-            get { lock (syncObject) { return m_MentorListHeader; } }
-            set { lock (syncObject) { m_MentorListHeader = value; FirePropertyChanged("MentorListHeader"); } }
+            get { lock (syncObject) { return m_MentorsSignedIn; } }
+            set { lock (syncObject) { m_MentorsSignedIn = value; FirePropertyChanged("MentorsSignedIn"); } }
         }
 
         /// <summary>
@@ -132,12 +132,8 @@ namespace ChopshopSignin
             CheckedIn = new ObservableCollection<Person>(people.Where(x => x.CurrentLocation == Scan.LocationType.In));
 
             // Get the count of each type
-            var studentCount = CheckedIn.Count(x => x.Role == Person.RoleType.Student);
-            var mentorCount = CheckedIn.Count(x => x.Role == Person.RoleType.Mentor);
-
-            // Generate the new headers
-            StudentListHeader = string.Format("Students Signed In ({0})", studentCount);
-            MentorListHeader = string.Format("Mentors Signed In ({0})", mentorCount);
+            StudentsSignedIn = CheckedIn.Count(x => x.Role == Person.RoleType.Student);
+            MentorsSignedIn = CheckedIn.Count(x => x.Role == Person.RoleType.Mentor);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -170,8 +166,8 @@ namespace ChopshopSignin
 
         private string m_LastScan = string.Empty;
         private DateTime m_CurrentTime = DateTime.Now;
-        private string m_StudentListHeader = string.Empty;
-        private string m_MentorListHeader = string.Empty;
+        private int m_StudentsSignedIn;
+        private int m_MentorsSignedIn;
         private ObservableCollection<Person> m_CheckedIn = new ObservableCollection<Person>();
         private TimeSpan m_TotalTime = TimeSpan.Zero;
         private DateTime m_OldestTime = DateTime.Now;
