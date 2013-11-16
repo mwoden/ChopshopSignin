@@ -70,10 +70,9 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" TextWrapping="Wrap" TextAlignment="Center"
+            <TextBlock Grid.Row="0"  Text="{Binding CurrentTimeString}" TextWrapping="Wrap" TextAlignment="Center"
                         HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                        FontWeight="Bold" FontSize="72">Fri Nov 15, 2013 10:03:31 PM</TextBlock>
-
+                        FontWeight="Bold" FontSize="72"/>
 
             <Image Grid.Row="1" Margin="5" Source="{StaticResource ResourceKey=TeamLogo}"/>
 
