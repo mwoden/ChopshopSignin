@@ -11,43 +11,61 @@ namespace ChopshopSignin
         public int TotalTimeUpdateInterval
         {
             get { return m_TotalTimeUpdateInterval; }
-            set { m_TotalTimeUpdateInterval = value; FirePropertyChanged("TotalTimeUpdateInterval"); }
+            set { m_TotalTimeUpdateInterval = value; FirePropertyChanged("TotalTimeUpdateInterval"); IsDirty = true; }
         }
 
         public int ScanInTimeoutWindow
         {
             get { return m_ScanInTimeoutWindow; }
-            set { m_ScanInTimeoutWindow = value; FirePropertyChanged("ScanInTimeoutWindow"); }
+            set { m_ScanInTimeoutWindow = value; FirePropertyChanged("ScanInTimeoutWindow"); IsDirty = true; }
         }
 
         public int ScanDataResetTime
         {
             get { return m_ScanDataResetTime; }
-            set { m_ScanDataResetTime = value; FirePropertyChanged("ScanDataResetTime"); }
+            set { m_ScanDataResetTime = value; FirePropertyChanged("ScanDataResetTime"); IsDirty = true; }
         }
 
         public int ClearScanStatusTime
         {
             get { return m_ClearScanStatusTime; }
-            set { m_ClearScanStatusTime = value; FirePropertyChanged("ClearScanStatusTime"); }
+            set { m_ClearScanStatusTime = value; FirePropertyChanged("ClearScanStatusTime"); IsDirty = true; }
         }
 
         public int MaxBackupFilesToKeep
         {
             get { return m_MaxBackupFilesToKeep; }
-            set { m_MaxBackupFilesToKeep = value; FirePropertyChanged("MaxBackupFilesToKeep"); }
+            set { m_MaxBackupFilesToKeep = value; FirePropertyChanged("MaxBackupFilesToKeep"); IsDirty = true; }
         }
 
         public bool ShowTimeUntilShip
         {
             get { return m_ShowTimeUntilShip; }
-            set { m_ShowTimeUntilShip = value; FirePropertyChanged("ShowTimeUntilShip"); }
+            set { m_ShowTimeUntilShip = value; FirePropertyChanged("ShowTimeUntilShip"); IsDirty = true; }
         }
 
         public bool CreateSummaryOnExit
         {
             get { return m_CreateSummaryOnExit; }
-            set { m_CreateSummaryOnExit = value; FirePropertyChanged("CreateSummaryOnExit"); }
+            set { m_CreateSummaryOnExit = value; FirePropertyChanged("CreateSummaryOnExit"); IsDirty = true; }
+        }
+
+        public DateTime Kickoff
+        {
+            get { return m_Kickoff; }
+            set { m_Kickoff = value; FirePropertyChanged("Kickoff"); IsDirty = true; }
+        }
+
+        public DateTime Ship
+        {
+            get { return m_Ship; }
+            set { m_Ship = value; FirePropertyChanged("Ship"); IsDirty = true; }
+        }
+
+        public bool IsDirty
+        {
+            get { return m_IsDirty; }
+            private set { m_IsDirty = value; FirePropertyChanged("IsDirty"); }
         }
 
         public SettingsWindowViewModel(Properties.Settings currentSettings)
@@ -61,62 +79,91 @@ namespace ChopshopSignin
             MaxBackupFilesToKeep = settings.MaxBackupFilesToKeep;
             ShowTimeUntilShip = settings.ShowTimeUntilShip;
             CreateSummaryOnExit = settings.CreateSummaryOnExit;
+
+            if (settings.Kickoff == DateTime.MinValue)
+                Kickoff = new DateTime(DateTime.Now.Year, 1, 1);
+            else
+                Kickoff = settings.Kickoff;
+
+            if (settings.Ship == DateTime.MinValue)
+                Ship = new DateTime(DateTime.Now.Year, 2, 1);
+            else
+                Ship = settings.Ship;
+
+            IsDirty = false;
         }
 
         public void Save()
         {
-            bool saveSettings = false;
-
-            if (TotalTimeUpdateInterval != settings.TotalTimeUpdateInterval)
+            if (IsDirty)
             {
                 settings.TotalTimeUpdateInterval = TotalTimeUpdateInterval;
-                saveSettings = true;
-            }
-
-            if (ScanInTimeoutWindow != settings.ScanInTimeoutWindow)
-            {
+                //settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
                 settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
-                saveSettings = true;
-            }
-
-            if (ScanInTimeoutWindow != settings.ScanInTimeoutWindow)
-            {
-                settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
-                saveSettings = true;
-            }
-
-            if (ScanDataResetTime != settings.ScanDataResetTime)
-            {
                 settings.ScanDataResetTime = ScanDataResetTime;
-                saveSettings = true;
-            }
-
-            if (ClearScanStatusTime != settings.ClearScanStatusTime)
-            {
                 settings.ClearScanStatusTime = ClearScanStatusTime;
-                saveSettings = true;
-            }
-
-            if (MaxBackupFilesToKeep != settings.MaxBackupFilesToKeep)
-            {
                 settings.MaxBackupFilesToKeep = MaxBackupFilesToKeep;
-                saveSettings = true;
-            }
-
-            if (ShowTimeUntilShip != settings.ShowTimeUntilShip)
-            {
                 settings.ShowTimeUntilShip = ShowTimeUntilShip;
-                saveSettings = true;
-            }
-
-            if (CreateSummaryOnExit != settings.CreateSummaryOnExit)
-            {
                 settings.CreateSummaryOnExit = CreateSummaryOnExit;
-                saveSettings = true;
+                settings.Kickoff = Kickoff;
+                settings.Ship = Ship;
+
+                settings.Save();
+                IsDirty = false;
             }
 
-            if (saveSettings)
-                settings.Save();
+            //bool saveSettings = false;
+
+            //if (TotalTimeUpdateInterval != settings.TotalTimeUpdateInterval)
+            //{
+            //    settings.TotalTimeUpdateInterval = TotalTimeUpdateInterval;
+            //    saveSettings = true;
+            //}
+
+            //if (ScanInTimeoutWindow != settings.ScanInTimeoutWindow)
+            //{
+            //    settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
+            //    saveSettings = true;
+            //}
+
+            //if (ScanInTimeoutWindow != settings.ScanInTimeoutWindow)
+            //{
+            //    settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
+            //    saveSettings = true;
+            //}
+
+            //if (ScanDataResetTime != settings.ScanDataResetTime)
+            //{
+            //    settings.ScanDataResetTime = ScanDataResetTime;
+            //    saveSettings = true;
+            //}
+
+            //if (ClearScanStatusTime != settings.ClearScanStatusTime)
+            //{
+            //    settings.ClearScanStatusTime = ClearScanStatusTime;
+            //    saveSettings = true;
+            //}
+
+            //if (MaxBackupFilesToKeep != settings.MaxBackupFilesToKeep)
+            //{
+            //    settings.MaxBackupFilesToKeep = MaxBackupFilesToKeep;
+            //    saveSettings = true;
+            //}
+
+            //if (ShowTimeUntilShip != settings.ShowTimeUntilShip)
+            //{
+            //    settings.ShowTimeUntilShip = ShowTimeUntilShip;
+            //    saveSettings = true;
+            //}
+
+            //if (CreateSummaryOnExit != settings.CreateSummaryOnExit)
+            //{
+            //    settings.CreateSummaryOnExit = CreateSummaryOnExit;
+            //    saveSettings = true;
+            //}
+
+            //if (saveSettings)
+            //    settings.Save();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -128,6 +175,10 @@ namespace ChopshopSignin
         private int m_MaxBackupFilesToKeep;
         private bool m_ShowTimeUntilShip;
         private bool m_CreateSummaryOnExit;
+        private DateTime m_Kickoff;
+        private DateTime m_Ship;
+
+        private bool m_IsDirty;
 
         private Properties.Settings settings;
 

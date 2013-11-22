@@ -299,6 +299,18 @@ namespace ChopshopSignin
 
                 System.IO.File.Copy(originalFilePath, backupFilePath);
 
+                var archiveFolder = ChopshopSignin.Properties.Settings.Default.ArchiveFolder;
+
+
+                // Check if the archive location is set (not empty) and the path is available
+                if (!string.IsNullOrWhiteSpace(archiveFolder) && System.IO.Directory.Exists(archiveFolder))
+                {
+                    var archiveFile = System.IO.Path.Combine(archiveFolder, backupFile);
+
+                    // Copy the latest backup file to archive
+                    System.IO.File.Copy(backupFilePath, archiveFile);
+                }
+
                 // Clean out the backup folder
                 ManageBackupFiles(backupFolder, Properties.Settings.Default.MaxBackupFilesToKeep);
             }

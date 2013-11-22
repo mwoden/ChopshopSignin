@@ -151,5 +151,36 @@ namespace ChopshopSignin.Properties {
                 this["MaxBackupFilesToKeep"] = value;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ArchiveFolder {
+            get {
+                return ((string)(this["ArchiveFolder"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.DateTime Kickoff {
+            get {
+                return ((global::System.DateTime)(this["Kickoff"]));
+            }
+            set {
+                this["Kickoff"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.DateTime Ship {
+            get {
+                return ((global::System.DateTime)(this["Ship"]));
+            }
+            set {
+                this["Ship"] = value;
+            }
+        }
     }
 }

@@ -27,19 +27,22 @@ namespace ChopshopSignin
         {
             get
             {
-                return Enumerable.Range(1, 7)
-                                 .Select(x => new DateTime(DateTime.Today.Year, 1, x))
-                                 .Single(x => x.DayOfWeek == DayOfWeek.Saturday);
+                return Properties.Settings.Default.Kickoff;
+            //    return Enumerable.Range(1, 7)
+            //                     .Select(x => new DateTime(DateTime.Today.Year, 1, x))
+            //                     .Single(x => x.DayOfWeek == DayOfWeek.Saturday);
             }
         }
 
+        // Add one day to ship, since actual "ship" time is midnight end of the day, not the start
         public static DateTime Ship
         {
             get
             {
-                return Enumerable.Range(1, 7)
-                                 .Select(x => Kickoff.AddDays(Properties.Settings.Default.SeasonLengthWeeks * 7).AddDays(x))
-                                 .Single(s => s.DayOfWeek == DayOfWeek.Wednesday);
+                return Properties.Settings.Default.Ship.AddDays(1);
+                //return Enumerable.Range(1, 7)
+                //                 .Select(x => Kickoff.AddDays(Properties.Settings.Default.SeasonLengthWeeks * 7).AddDays(x))
+                //                 .Single(s => s.DayOfWeek == DayOfWeek.Wednesday);
             }
         }
 

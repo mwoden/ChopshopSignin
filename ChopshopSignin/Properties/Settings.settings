@@ -38,5 +38,14 @@
     <Setting Name="MaxBackupFilesToKeep" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">2147483647</Value>
     </Setting>
+    <Setting Name="ArchiveFolder" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="Kickoff" Type="System.DateTime" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="Ship" Type="System.DateTime" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

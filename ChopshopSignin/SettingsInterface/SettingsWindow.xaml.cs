@@ -32,9 +32,15 @@ namespace ChopshopSignin
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
-        {         
+        {
             viewModel.Save();
             Close();
+        }
+
+        private void Test_Click(object sender, RoutedEventArgs e)
+        {
+
+
         }
     }
 }

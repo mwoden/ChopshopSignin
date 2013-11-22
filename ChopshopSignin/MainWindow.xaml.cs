@@ -24,6 +24,8 @@ namespace ChopshopSignin
         private readonly ViewModel viewModel;
         private readonly SignInManager signInManger;
 
+        private bool disposed = false;
+
         public static RoutedCommand SignOutAllCommand = new RoutedCommand("Sign Everyone Out", typeof(MainWindow));
         public static RoutedCommand CreateSummaryCommand = new RoutedCommand("Create Summary Data Files", typeof(MainWindow));
         public static RoutedCommand ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
@@ -48,6 +50,7 @@ namespace ChopshopSignin
             ((CollectionViewSource)FindResource("CheckedInStudents")).SortDescriptions.Add(sortDesc);
             ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
 
+            // Add the shortcut keys for the various commands
             SignOutAllCommand.InputGestures.Add(new KeyGesture(Key.O, ModifierKeys.Control | ModifierKeys.Shift));
             CreateSummaryCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control));
             ExitCommand.InputGestures.Add(new KeyGesture(Key.W, ModifierKeys.Control));
@@ -63,7 +66,7 @@ namespace ChopshopSignin
         {
             System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
         }
-
+        
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
         {
             signInManger.HandleScanData(e.Text);
@@ -73,6 +76,25 @@ namespace ChopshopSignin
         {
             // Update the displayed lists after loading all data
             viewModel.UpdateCheckedInList(signInManger.SignedInPeople);
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (signInManger.AnySignedIn)
+            {
+                string message = "There are still people signed in!" + Environment.NewLine +
+                    "Leaving people signed in overnight can case problems" + Environment.NewLine +
+                    Environment.NewLine +
+                    "Sign everyone out before quitting" + Environment.NewLine +
+                    Environment.NewLine +
+                    "Proceed anyway?";
+
+                var result = MessageBox.Show(message, "People still signed in", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                
+                if (result != MessageBoxResult.Yes)
+                    e.Cancel = true;
+            }
+
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -104,9 +126,7 @@ namespace ChopshopSignin
         {
             Dispose(true);
         }
-
-        private bool disposed = false;
-
+        
         private void Dispose(bool disposing)
         {
             if (disposing)
@@ -185,7 +205,6 @@ namespace ChopshopSignin
         private void SettingsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             new SettingsWindow().ShowDialog();
-
         }
     }
 }
