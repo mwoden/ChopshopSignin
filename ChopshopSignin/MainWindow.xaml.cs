@@ -28,6 +28,7 @@ namespace ChopshopSignin
 
         public static RoutedCommand SignOutAllCommand = new RoutedCommand("Sign Everyone Out", typeof(MainWindow));
         public static RoutedCommand CreateSummaryCommand = new RoutedCommand("Create Summary Data Files", typeof(MainWindow));
+        public static RoutedCommand CleanCurrentFileCommand = new RoutedCommand("Clean Current File", typeof(MainWindow));
         public static RoutedCommand ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
         public static RoutedCommand SettingsCommand = new RoutedCommand("Settings", typeof(MainWindow));
 
@@ -66,7 +67,7 @@ namespace ChopshopSignin
         {
             System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
         }
-        
+
         private void Window_TextInput(object sender, TextCompositionEventArgs e)
         {
             signInManger.HandleScanData(e.Text);
@@ -90,7 +91,7 @@ namespace ChopshopSignin
                     "Proceed anyway?";
 
                 var result = MessageBox.Show(message, "People still signed in", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-                
+
                 if (result != MessageBoxResult.Yes)
                     e.Cancel = true;
             }
@@ -126,7 +127,7 @@ namespace ChopshopSignin
         {
             Dispose(true);
         }
-        
+
         private void Dispose(bool disposing)
         {
             if (disposing)
@@ -177,11 +178,6 @@ namespace ChopshopSignin
             signInManger.SignAllOut();
         }
 
-        private void CreateSummaryCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = true;
-        }
-
         private void CreateSummaryCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             signInManger.CreateSummaryFiles();
@@ -189,7 +185,7 @@ namespace ChopshopSignin
 
         private void ExitCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = true;
+            e.CanExecute = !signInManger.AnySignedIn;
         }
 
         private void ExitCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -197,14 +193,14 @@ namespace ChopshopSignin
             Close();
         }
 
-        private void SettingsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = true;
-        }
-
         private void SettingsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             new SettingsWindow().ShowDialog();
+        }
+
+        private void CleanCurrentFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            new PruneDialog(signInManger).ShowDialog();
         }
     }
 }

@@ -182,5 +182,16 @@ namespace ChopshopSignin.Properties {
                 this["Ship"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.DateTime TimeSince {
+            get {
+                return ((global::System.DateTime)(this["TimeSince"]));
+            }
+            set {
+                this["TimeSince"] = value;
+            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿<!-- Width and Height are set to the resolution of the attendance computer scree. This
+﻿<!-- Width and Height are set to the resolution of the attendance computer screen. This
      is to ensure that development on large monitors will use the correct size. -->
 <Window x:Class="ChopshopSignin.MainWindow"
         x:ClassModifier="internal"
@@ -37,20 +37,22 @@
                         Executed="SignOutAllCommand_Executed"
                         CanExecute="SignOutAllCommand_CanExecute"/>
         <CommandBinding Command="{x:Static local:MainWindow.CreateSummaryCommand}"
-                        Executed="CreateSummaryCommand_Executed"
-                        CanExecute="CreateSummaryCommand_CanExecute"/>
+                        Executed="CreateSummaryCommand_Executed"/>
         <CommandBinding Command="{x:Static local:MainWindow.ExitCommand}"
                         Executed="ExitCommand_Executed"
                         CanExecute="ExitCommand_CanExecute"/>
         <CommandBinding Command="{x:Static local:MainWindow.SettingsCommand}"
-                        Executed="SettingsCommand_Executed"
-                        CanExecute="SettingsCommand_CanExecute"/>
+                        Executed="SettingsCommand_Executed"/>
+        <CommandBinding Command="{x:Static local:MainWindow.CleanCurrentFileCommand}"
+                        Executed="CleanCurrentFileCommand_Executed"/>
     </Window.CommandBindings>
 
     <Window.ContextMenu>
         <ContextMenu>
             <MenuItem Command="{x:Static local:MainWindow.SignOutAllCommand}" Header="{Binding Source={x:Static local:MainWindow.SignOutAllCommand}, Path=Name}"/>
             <MenuItem Command="{x:Static local:MainWindow.CreateSummaryCommand}" Header="{Binding Source={x:Static local:MainWindow.CreateSummaryCommand}, Path=Name}"/>
+            <Separator/>
+            <MenuItem Command="{x:Static local:MainWindow.CleanCurrentFileCommand}" Header="{Binding Source={x:Static local:MainWindow.CleanCurrentFileCommand}, Path=Name}"/>
             <Separator/>
             <MenuItem Command="{x:Static local:MainWindow.SettingsCommand}" Header="{Binding Source={x:Static local:MainWindow.SettingsCommand}, Path=Name}"/>
             <Separator/>

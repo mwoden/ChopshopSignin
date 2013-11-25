@@ -81,20 +81,11 @@ namespace ChopshopSignin
         }
 
         /// <summary>
-        /// The oldest timestamp, for displaying the total time
-        /// </summary>
-        public DateTime OldestTime
-        {
-            get { return m_OldestTime; }
-            set { m_OldestTime = value; FirePropertyChanged("OldestTime"); FirePropertyChanged("TimeSpentHeader"); }
-        }
-
-        /// <summary>
-        /// The header for time spent, with the oldest scan displayed
+        /// The header for time spent, with the starting date
         /// </summary>
         public string TimeSpentHeader
         {
-            get { return string.Format("Time spent since {0}", OldestTime.ToShortDateString()); }
+            get { return string.Format("Time spent since {0}", Properties.Settings.Default.TimeSince.ToShortDateString()); }
         }
 
         /// <summary>
@@ -158,6 +149,9 @@ namespace ChopshopSignin
                 case "ClearScanStatusTime":
                     clearStatusTime = TimeSpan.FromSeconds(Properties.Settings.Default.ClearScanStatusTime);
                     break;
+                case "TimeSince":
+                    FirePropertyChanged("TimeSpentHeader");
+                    break;
             }
             FirePropertyChanged(null);
         }
@@ -170,7 +164,7 @@ namespace ChopshopSignin
         private int m_MentorsSignedIn;
         private ObservableCollection<Person> m_CheckedIn = new ObservableCollection<Person>();
         private TimeSpan m_TotalTime = TimeSpan.Zero;
-        private DateTime m_OldestTime = DateTime.Now;
+        private DateTime m_StartTime = DateTime.Now;
         private DateTime m_ShipDate = DateTime.MinValue;
         private string m_TimeUntilShip = string.Empty;
 

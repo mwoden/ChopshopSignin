@@ -174,6 +174,18 @@ namespace ChopshopSignin
             return Enumerable.Empty<Person>();
         }
 
+        /// <summary>
+        /// Removes all entries prior to the date specified by the cut-off parameter
+        /// </summary>
+        /// <param name="cutoff">Date which indicates the oldest scan that will be kept. Time will be ignored, only date is used.</param>
+        public void Prune(DateTime cutoff)
+        {
+            var discard = Timestamps.Where(x => x.ScanTime < cutoff.Date).ToList();
+            var keep = Timestamps.Where(x => x.ScanTime >= cutoff.Date).ToList();
+
+            Timestamps = Timestamps.Where(x => x.ScanTime >= cutoff.Date).ToList();
+        }
+
         public IDictionary<DateTime, TimeSpan> GetTimeSummary()
         {
             // Get the person's timestamps and group them by week

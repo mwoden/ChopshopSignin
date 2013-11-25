@@ -62,6 +62,12 @@ namespace ChopshopSignin
             set { m_Ship = value; FirePropertyChanged("Ship"); IsDirty = true; }
         }
 
+        public DateTime TimeSince
+        {
+            get { return m_TimeSince; }
+            set { m_TimeSince = value; FirePropertyChanged("TimeSince"); IsDirty = true; }
+        }
+
         public bool IsDirty
         {
             get { return m_IsDirty; }
@@ -90,6 +96,11 @@ namespace ChopshopSignin
             else
                 Ship = settings.Ship;
 
+            if (settings.TimeSince == DateTime.MinValue)
+                TimeSince = Kickoff;
+            else
+                TimeSince = settings.TimeSince;
+
             IsDirty = false;
         }
 
@@ -98,7 +109,6 @@ namespace ChopshopSignin
             if (IsDirty)
             {
                 settings.TotalTimeUpdateInterval = TotalTimeUpdateInterval;
-                //settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
                 settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
                 settings.ScanDataResetTime = ScanDataResetTime;
                 settings.ClearScanStatusTime = ClearScanStatusTime;
@@ -107,63 +117,11 @@ namespace ChopshopSignin
                 settings.CreateSummaryOnExit = CreateSummaryOnExit;
                 settings.Kickoff = Kickoff;
                 settings.Ship = Ship;
+                settings.TimeSince = TimeSince;
 
                 settings.Save();
                 IsDirty = false;
             }
-
-            //bool saveSettings = false;
-
-            //if (TotalTimeUpdateInterval != settings.TotalTimeUpdateInterval)
-            //{
-            //    settings.TotalTimeUpdateInterval = TotalTimeUpdateInterval;
-            //    saveSettings = true;
-            //}
-
-            //if (ScanInTimeoutWindow != settings.ScanInTimeoutWindow)
-            //{
-            //    settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
-            //    saveSettings = true;
-            //}
-
-            //if (ScanInTimeoutWindow != settings.ScanInTimeoutWindow)
-            //{
-            //    settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
-            //    saveSettings = true;
-            //}
-
-            //if (ScanDataResetTime != settings.ScanDataResetTime)
-            //{
-            //    settings.ScanDataResetTime = ScanDataResetTime;
-            //    saveSettings = true;
-            //}
-
-            //if (ClearScanStatusTime != settings.ClearScanStatusTime)
-            //{
-            //    settings.ClearScanStatusTime = ClearScanStatusTime;
-            //    saveSettings = true;
-            //}
-
-            //if (MaxBackupFilesToKeep != settings.MaxBackupFilesToKeep)
-            //{
-            //    settings.MaxBackupFilesToKeep = MaxBackupFilesToKeep;
-            //    saveSettings = true;
-            //}
-
-            //if (ShowTimeUntilShip != settings.ShowTimeUntilShip)
-            //{
-            //    settings.ShowTimeUntilShip = ShowTimeUntilShip;
-            //    saveSettings = true;
-            //}
-
-            //if (CreateSummaryOnExit != settings.CreateSummaryOnExit)
-            //{
-            //    settings.CreateSummaryOnExit = CreateSummaryOnExit;
-            //    saveSettings = true;
-            //}
-
-            //if (saveSettings)
-            //    settings.Save();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -177,6 +135,7 @@ namespace ChopshopSignin
         private bool m_CreateSummaryOnExit;
         private DateTime m_Kickoff;
         private DateTime m_Ship;
+        private DateTime m_TimeSince;
 
         private bool m_IsDirty;
 

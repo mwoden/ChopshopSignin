@@ -179,6 +179,19 @@ namespace ChopshopSignin
                 model.ScanStatus = "Sign everyone out command cancelled";
         }
 
+        /// <summary>
+        /// Removes all entries prior to the date specified by the cut-off parameter
+        /// </summary>
+        /// <param name="cutoff">Date which indicates the oldest scan that will be kept. Time will be ignored, only date is used.</param>
+        public void Prune(DateTime cutoff)
+        {
+            foreach (var person in people.Values)
+                person.Prune(cutoff);
+
+            changeCount++;
+            //Person.Save(people.Values, xmlDataFile);
+        }
+
         private SignInManager()
         {
             // Events not defined in this dictionary will result in ignoring that event
@@ -220,6 +233,11 @@ namespace ChopshopSignin
                 case "TotalTimeUpdateInterval":
                     UpdateTotalTimeTimeout = TimeSpan.FromSeconds(settings.TotalTimeUpdateInterval);
                     // For this case, clear the event scheduled and update the time now, rescheduling it also
+                    eventList.Clear(EventList.Event.UpdateTotalTime);
+                    UpdateTotalTime();
+                    break;
+
+                case "TimeSince":
                     eventList.Clear(EventList.Event.UpdateTotalTime);
                     UpdateTotalTime();
                     break;
@@ -302,14 +320,13 @@ namespace ChopshopSignin
             // Queue up the next update
             eventList.Set(EventList.Event.UpdateTotalTime, UpdateTotalTimeTimeout);
 
+            var startingDate = Properties.Settings.Default.TimeSince.Date;
+
             // Ensure that there are some people
             if (people.Any())
             {
-                // Find the oldest time for the display
-                model.OldestTime = people.Values.Where(x => x.Timestamps.Any()).SelectMany(x => x.Timestamps).Min(x => x.ScanTime);
-
-                // Total up all the time
-                model.TotalTime = people.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(Utility.Kickoff)));
+                // Total up all the time since the starting date
+                model.TotalTime = people.Values.Aggregate(TimeSpan.Zero, (accumulate, x) => accumulate = accumulate.Add(x.GetTotalTimeSince(startingDate)));
             }
         }
 

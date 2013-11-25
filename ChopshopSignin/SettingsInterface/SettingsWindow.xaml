@@ -21,7 +21,7 @@
                 <Setter Property="Margin" Value="5"/>
             </Style>
         </DockPanel.Resources>
-        
+
         <Grid DockPanel.Dock="Bottom">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
@@ -30,13 +30,14 @@
             <Button Grid.Row="7" Grid.Column="0" Click="Save_Click" IsEnabled="{Binding Path=IsDirty}">Save &amp; Close</Button>
             <Button Grid.Row="7" Grid.Column="1" Click="Cancel_Click">Cancel</Button>
         </Grid>
-   
-        <Grid>         
+
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -75,7 +76,11 @@
 
             <Label Grid.Row="8" Grid.Column="0">Ship</Label>
             <DatePicker Grid.Row="8" Grid.Column="1" SelectedDate="{Binding Path=Ship}" ToolTip="The date of the robot has be to bagged and tagged"/>
-            
+
+            <Label Grid.Row="9" Grid.Column="0">'Time Since' Start Date</Label>
+            <DatePicker Grid.Row="9" Grid.Column="1"  SelectedDate="{Binding Path=TimeSince}" ToolTip="The date to use to calculate the 'Time Spent Since' value"/>
+
+
         </Grid>
     </DockPanel>
 </Window>
