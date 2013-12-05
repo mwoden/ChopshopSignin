@@ -101,10 +101,6 @@ namespace ChopshopSignin
         private void Window_Closed(object sender, EventArgs e)
         {
             signInManger.Commit();
-
-            if (Properties.Settings.Default.CreateSummaryOnExit)
-                signInManger.CreateSummaryFiles();
-
             Dispose();
         }
 

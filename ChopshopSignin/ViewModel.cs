@@ -8,7 +8,7 @@ using System.Timers;
 
 namespace ChopshopSignin
 {
-    sealed internal class ViewModel : INotifyPropertyChanged
+    sealed internal class ViewModel : ViewModelBase
     {
         /// <summary>
         /// The scan status text to display
@@ -16,7 +16,7 @@ namespace ChopshopSignin
         public string ScanStatus
         {
             get { lock (syncObject) { return m_LastScan; } }
-            set { lock (syncObject) { m_LastScan = value; eventList.Set(EventList.Event.ClearDisplayStatus, clearStatusTime); FirePropertyChanged("ScanStatus"); } }
+            set { lock (syncObject) { m_LastScan = value; eventList.Set(EventList.Event.ClearDisplayStatus, clearStatusTime); FirePropertyChanged(); } }
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace ChopshopSignin
         public DateTime CurrentTime
         {
             get { lock (syncObject) { return m_CurrentTime; } }
-            set { lock (syncObject) { m_CurrentTime = value; FirePropertyChanged("CurrentTime"); FirePropertyChanged("CurrentTimeString"); } }
+            set { lock (syncObject) { m_CurrentTime = value; FirePropertyChanged(); FirePropertyChanged("CurrentTimeString"); } }
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace ChopshopSignin
         public int StudentsSignedIn
         {
             get { lock (syncObject) { return m_StudentsSignedIn; } }
-            set { lock (syncObject) { m_StudentsSignedIn = value; FirePropertyChanged("StudentsSignedIn"); } }
+            set { lock (syncObject) { m_StudentsSignedIn = value; FirePropertyChanged(); } }
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace ChopshopSignin
         public int MentorsSignedIn
         {
             get { lock (syncObject) { return m_MentorsSignedIn; } }
-            set { lock (syncObject) { m_MentorsSignedIn = value; FirePropertyChanged("MentorsSignedIn"); } }
+            set { lock (syncObject) { m_MentorsSignedIn = value; FirePropertyChanged(); } }
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace ChopshopSignin
         public ObservableCollection<Person> CheckedIn
         {
             get { return m_CheckedIn; }
-            set { m_CheckedIn = value; FirePropertyChanged("CheckedIn"); }
+            set { m_CheckedIn = value; FirePropertyChanged(); }
         }
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace ChopshopSignin
         public TimeSpan TotalTime
         {
             get { return m_TotalTime; }
-            set { m_TotalTime = value; FirePropertyChanged("TotalTime"); FirePropertyChanged("TotalTimeString"); }
+            set { m_TotalTime = value; FirePropertyChanged(); FirePropertyChanged("TotalTimeString"); }
         }
 
         /// <summary>
@@ -85,7 +85,13 @@ namespace ChopshopSignin
         /// </summary>
         public string TimeSpentHeader
         {
-            get { return string.Format("Time spent since {0}", Properties.Settings.Default.TimeSince.ToShortDateString()); }
+            get
+            {
+                if (Properties.Settings.Default.TimeSince == DateTime.MinValue)
+                    return "Time spent";
+
+                return string.Format("Time spent since {0}", Properties.Settings.Default.TimeSince.ToShortDateString());
+            }
         }
 
         /// <summary>
@@ -102,7 +108,7 @@ namespace ChopshopSignin
         public string TimeUntilShip
         {
             get { return m_TimeUntilShip; }
-            set { m_TimeUntilShip = value; FirePropertyChanged("TimeUntilShip"); }
+            set { m_TimeUntilShip = value; FirePropertyChanged(); }
         }
 
         /// <summary>
@@ -127,8 +133,6 @@ namespace ChopshopSignin
             MentorsSignedIn = CheckedIn.Count(x => x.Role == Person.RoleType.Mentor);
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
         public ViewModel()
         {
             eventList = new EventList();
@@ -139,10 +143,10 @@ namespace ChopshopSignin
             timer.Elapsed += ClockTick;
             timer.Enabled = true;
 
-            Properties.Settings.Default.PropertyChanged += Default_PropertyChanged;
+            Properties.Settings.Default.PropertyChanged += SettingChanged;
         }
 
-        void Default_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        void SettingChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
@@ -174,7 +178,7 @@ namespace ChopshopSignin
         private EventList eventList;
 
         // Time that a status message will be displayed
-        private TimeSpan clearStatusTime = new TimeSpan(0, 1, 0);
+        private TimeSpan clearStatusTime = TimeSpan.FromSeconds(Properties.Settings.Default.ClearScanStatusTime);
 
         /// <summary>
         /// Timer handler for clearing the status
@@ -184,14 +188,8 @@ namespace ChopshopSignin
             CurrentTime = e.SignalTime;
 
             if (ShowTimeUntilShip && ShipDate > e.SignalTime)
-            {
-                var timeLeft = ShipDate - DateTime.Now;
+                TimeUntilShip = (ShipDate - DateTime.Now).ToString(@"dd\.hh\:mm\:ss");
 
-                TimeUntilShip = timeLeft.Days.ToString("F0") + " " + (timeLeft.Days == 1 ? "day" : "days") + " " +
-                                timeLeft.Hours.ToString("F0") + " " + (timeLeft.Hours == 1 ? "hour" : "hours") + " " +
-                                timeLeft.Minutes.ToString("F0") + " " + (timeLeft.Minutes == 1 ? "minute" : "minutes") + " " +
-                                timeLeft.Seconds.ToString("F0") + " " + (timeLeft.Seconds == 1 ? "second" : "seconds");
-            }
 
             if (eventList.HasExpired(EventList.Event.ClearDisplayStatus, e.SignalTime))
             {
@@ -200,15 +198,8 @@ namespace ChopshopSignin
             }
         }
 
-        private void FirePropertyChanged(string propertyName)
-        {
-            var handler = PropertyChanged;
-            if (handler != null)
-                handler(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         public void Dispose()
-        {
+        {            
             Dispose(true);
         }
 

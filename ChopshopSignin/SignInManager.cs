@@ -233,12 +233,10 @@ namespace ChopshopSignin
                 case "TotalTimeUpdateInterval":
                     UpdateTotalTimeTimeout = TimeSpan.FromSeconds(settings.TotalTimeUpdateInterval);
                     // For this case, clear the event scheduled and update the time now, rescheduling it also
-                    eventList.Clear(EventList.Event.UpdateTotalTime);
                     UpdateTotalTime();
                     break;
 
                 case "TimeSince":
-                    eventList.Clear(EventList.Event.UpdateTotalTime);
                     UpdateTotalTime();
                     break;
             }

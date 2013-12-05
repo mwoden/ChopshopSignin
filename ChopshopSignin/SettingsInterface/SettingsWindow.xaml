@@ -27,8 +27,8 @@
                 <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Row="7" Grid.Column="0" Click="Save_Click" IsEnabled="{Binding Path=IsDirty}">Save &amp; Close</Button>
-            <Button Grid.Row="7" Grid.Column="1" Click="Cancel_Click">Cancel</Button>
+            <Button Click="Save_Click" IsEnabled="{Binding Path=IsDirty}">Save &amp; Close</Button>
+            <Button Click="Cancel_Click">Cancel</Button>
         </Grid>
 
         <Grid>
@@ -37,7 +37,6 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -68,17 +67,14 @@
             <Label Grid.Row="5" Grid.Column="0">Show Time Until Ship</Label>
             <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding Path=ShowTimeUntilShip}" ToolTip="Displays the countdown timer until ship"/>
 
-            <Label Grid.Row="6" Grid.Column="0">Create Summary On Exit</Label>
-            <CheckBox Grid.Row="6" Grid.Column="1" IsChecked="{Binding Path=CreateSummaryOnExit}" ToolTip="Creates the sign-in data summary files every time the application is closed"/>
+            <Label Grid.Row="6" Grid.Column="0">Kickoff</Label>
+            <DatePicker Grid.Row="6" Grid.Column="1"  SelectedDate="{Binding Path=Kickoff}" ToolTip="The date of FRC Kickoff"/>
 
-            <Label Grid.Row="7" Grid.Column="0">Kickoff</Label>
-            <DatePicker Grid.Row="7" Grid.Column="1"  SelectedDate="{Binding Path=Kickoff}" ToolTip="The date of FRC Kickoff"/>
+            <Label Grid.Row="7" Grid.Column="0">Ship</Label>
+            <DatePicker Grid.Row="7" Grid.Column="1" SelectedDate="{Binding Path=Ship}" ToolTip="The date of the robot has be to bagged and tagged"/>
 
-            <Label Grid.Row="8" Grid.Column="0">Ship</Label>
-            <DatePicker Grid.Row="8" Grid.Column="1" SelectedDate="{Binding Path=Ship}" ToolTip="The date of the robot has be to bagged and tagged"/>
-
-            <Label Grid.Row="9" Grid.Column="0">'Time Since' Start Date</Label>
-            <DatePicker Grid.Row="9" Grid.Column="1"  SelectedDate="{Binding Path=TimeSince}" ToolTip="The date to use to calculate the 'Time Spent Since' value"/>
+            <Label Grid.Row="8" Grid.Column="0">'Time Since' Start Date</Label>
+            <DatePicker Grid.Row="8" Grid.Column="1"  SelectedDate="{Binding Path=TimeSince}" ToolTip="The date to use to calculate the 'Time Spent Since' value"/>
 
 
         </Grid>

@@ -73,7 +73,7 @@ namespace ChopshopSignin.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool ShowTimeUntilShip {
             get {
                 return ((bool)(this["ShowTimeUntilShip"]));
@@ -125,18 +125,6 @@ namespace ChopshopSignin.Properties {
         public string BackupFolder {
             get {
                 return ((string)(this["BackupFolder"]));
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool CreateSummaryOnExit {
-            get {
-                return ((bool)(this["CreateSummaryOnExit"]));
-            }
-            set {
-                this["CreateSummaryOnExit"] = value;
             }
         }
         
