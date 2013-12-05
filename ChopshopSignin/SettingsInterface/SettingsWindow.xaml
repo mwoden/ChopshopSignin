@@ -27,8 +27,8 @@
                 <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Click="Save_Click" IsEnabled="{Binding Path=IsDirty}">Save &amp; Close</Button>
-            <Button Click="Cancel_Click">Cancel</Button>
+            <Button Grid.Column="0" Click="Save_Click" IsEnabled="{Binding Path=IsDirty}">Save &amp; Close</Button>
+            <Button Grid.Column="1" Click="Cancel_Click">Cancel</Button>
         </Grid>
 
         <Grid>

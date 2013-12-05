@@ -16,9 +16,8 @@
         TextInput="Window_TextInput"
         Loaded="Window_Loaded"
         Closing="Window_Closing"
-        Closed="Window_Closed">
-
-    <!--WindowState="Maximized"-->
+        Closed="Window_Closed"
+        WindowState="Maximized">
     <Window.Resources>
 
         <BitmapImage x:Key="TeamLogo" UriSource="/ChopShopLogo.jpg"/>
@@ -29,7 +28,7 @@
         <Style x:Key="SignedInNameStyle" TargetType="{x:Type TextBlock}">
             <Setter Property="FontSize" Value="16"/>
         </Style>
-        
+
     </Window.Resources>
 
     <Window.CommandBindings>
@@ -151,7 +150,7 @@
             <Border Grid.Row="1" Grid.Column="1" BorderThickness="2">
                 <TextBlock FontSize="22" Background="LightGray" TextAlignment="Center" Text="{Binding Path=MentorsSignedIn}"/>
             </Border>
-            
+
             <GroupBox Grid.Row="2" Grid.ColumnSpan="2" TextElement.FontSize="28">
                 <GroupBox.Header>
                     <TextBlock FontSize="22" Text="{Binding Path=TimeSpentHeader}"/>
