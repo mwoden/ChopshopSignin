@@ -26,7 +26,7 @@
         <CollectionViewSource x:Key="CheckedInMentors" Source="{Binding Path=CheckedIn}" Filter="Mentor_Filter"/>
 
         <Style x:Key="SignedInNameStyle" TargetType="{x:Type TextBlock}">
-            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontSize" Value="14"/>
         </Style>
 
     </Window.Resources>
@@ -111,7 +111,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=FullName}"/>
-                                <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" FontSize="12" TextAlignment="Right" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
+                                <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" TextAlignment="Right" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
 
                             </Grid>
                         </DataTemplate>
