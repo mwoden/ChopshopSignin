@@ -100,47 +100,48 @@
                 <GroupBox.Header>
                     <TextBlock FontSize="22">Students</TextBlock>
                 </GroupBox.Header>
-                <ItemsControl ItemsSource="{Binding Source={StaticResource ResourceKey=CheckedInStudents}}" Grid.IsSharedSizeScope="True"
-                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Time"/>
-                                </Grid.ColumnDefinitions>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Source={StaticResource ResourceKey=CheckedInStudents}}" Grid.IsSharedSizeScope="True">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,5,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Time"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=FullName}"/>
-                                <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" TextAlignment="Right" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=FullName}"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" TextAlignment="Right" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
 
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </GroupBox>
 
             <GroupBox Grid.Row="0" Grid.Column="1" TextElement.FontSize="18">
                 <GroupBox.Header>
                     <TextBlock FontSize="22">Mentors</TextBlock>
                 </GroupBox.Header>
-                <ItemsControl ItemsSource="{Binding Source={StaticResource ResourceKey=CheckedInMentors}}" Grid.IsSharedSizeScope="True"
-                              ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Time"/>
-                                </Grid.ColumnDefinitions>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Source={StaticResource ResourceKey=CheckedInMentors}}" Grid.IsSharedSizeScope="True">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Time"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=FullName}"/>
-                                <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
+                                    <TextBlock Grid.Column="0" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=FullName}"/>
+                                    <TextBlock Grid.Column="1" Style="{StaticResource ResourceKey=SignedInNameStyle}" Text="{Binding Path=TimeIn, StringFormat='h:mm tt'}"/>
 
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </GroupBox>
 
             <Border Grid.Row="1" Grid.Column="0" BorderThickness="2">
