@@ -77,7 +77,7 @@ namespace ChopshopSignin
         /// </summary>
         public string TotalTimeString
         {
-            get { return CreateTotalTimeString(TotalTime); }
+            get { return TotalTime.ToString(@"dd\.hh\:mm\:ss"); }
         }
 
         /// <summary>
@@ -196,22 +196,6 @@ namespace ChopshopSignin
                 ScanStatus = string.Empty;
                 eventList.Clear(EventList.Event.ClearDisplayStatus);
             }
-        }
-
-        private string CreateTotalTimeString(TimeSpan totalTime)
-        {
-            var timeString = string.Empty;
-
-            if (totalTime.Days > 0)
-                timeString += string.Format("{0:F0} day", totalTime.Days) + (totalTime.Days > 1 ? "s" : "") + ", ";
-
-            if (totalTime.Hours > 0)
-                timeString += string.Format("{0:F0} hour", totalTime.Hours) + (totalTime.Hours > 1 ? "s" : "") + ", ";
-
-            if (totalTime.Minutes > 0)
-                timeString += string.Format("{0:F0} minute", totalTime.Minutes) + (totalTime.Minutes > 1 ? "s" : "");
-
-            return timeString;
         }
 
         public void Dispose()
