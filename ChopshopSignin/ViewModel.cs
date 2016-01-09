@@ -5,6 +5,7 @@ using System.Text;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Timers;
+using System.Windows.Media.Imaging;
 
 namespace ChopshopSignin
 {
@@ -119,6 +120,12 @@ namespace ChopshopSignin
             get { return Properties.Settings.Default.ShowTimeUntilShip; }
         }
 
+        public BitmapSource Background
+        {
+            get { return _background; }
+            set { _background = value; FirePropertyChanged(); }
+        }
+
         /// <summary>
         /// Update the checked in list from a list of people
         /// </summary>
@@ -146,7 +153,7 @@ namespace ChopshopSignin
             Properties.Settings.Default.PropertyChanged += SettingChanged;
         }
 
-        void SettingChanged(object sender, PropertyChangedEventArgs e)
+        private void SettingChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
@@ -171,6 +178,7 @@ namespace ChopshopSignin
         private DateTime m_StartTime = DateTime.Now;
         private DateTime m_ShipDate = DateTime.MinValue;
         private string m_TimeUntilShip = string.Empty;
+        private BitmapSource _background;
 
         private const int timerInterval = 200;
         private Timer timer;
@@ -217,6 +225,5 @@ namespace ChopshopSignin
                 }
             }
         }
-
     }
 }

@@ -58,6 +58,8 @@ namespace ChopshopSignin
             SettingsCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control | ModifierKeys.Shift));
 
             DataContext = viewModel;
+
+            LoadBackgroundImage();
         }
 
         /// <summary>
@@ -197,6 +199,19 @@ namespace ChopshopSignin
         private void CleanCurrentFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             new PruneDialog(signInManger).ShowDialog();
+        }
+
+        private void LoadBackgroundImage()
+        {
+            var imageName = Properties.Settings.Default.BackgroundImage;
+            var file = System.IO.Path.Combine(Utility.OutputFolder, imageName);
+
+            if (System.IO.File.Exists(file))
+                using (var imageStream = System.IO.File.OpenRead(file))
+                {
+                    var decoder = JpegBitmapDecoder.Create(imageStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                    viewModel.Background = decoder.Frames.FirstOrDefault();
+                }
         }
     }
 }
