@@ -47,5 +47,8 @@
     <Setting Name="TimeSince" Type="System.DateTime" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="BackgroundImage" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Background.jpg</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
