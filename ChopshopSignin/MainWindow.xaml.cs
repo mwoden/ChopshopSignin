@@ -23,6 +23,7 @@ namespace ChopshopSignin
     {
         private readonly ViewModel viewModel;
         private readonly SignInManager signInManger;
+        private readonly System.Timers.Timer saveTimer;
 
         private bool disposed = false;
 
@@ -60,6 +61,8 @@ namespace ChopshopSignin
             DataContext = viewModel;
 
             LoadBackgroundImage();
+
+            saveTimer = new System.Timers.Timer(15 * 60 * 1000); // 15 minutes
         }
 
         /// <summary>
@@ -79,6 +82,15 @@ namespace ChopshopSignin
         {
             // Update the displayed lists after loading all data
             viewModel.UpdateCheckedInList(signInManger.SignedInPeople);
+
+            // Set up the save timer
+            saveTimer.Elapsed += PeriodicSave;
+            saveTimer.Enabled = true;
+        }
+
+        private void PeriodicSave(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            signInManger.Commit();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
