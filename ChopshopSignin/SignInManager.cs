@@ -65,89 +65,89 @@ namespace ChopshopSignin
             {
                 currentScanData.Append(scanText);
 
-                // If the termination character has been seen, start processing
-                if (scanText == "\r")
+                //// If the termination character has been seen, start processing
+                //if (scanText == "\r")
+                //{
+                // Extract the current scan data
+                var scanData = currentScanData.ToString().Trim();
+
+                // Disable the reset scan timer and reset the incoming
+                // scan data for the next scan
+                eventList.Clear(EventList.Event.ResetCurrentScan);
+                currentScanData = new StringBuilder();
+
+                // Determine if a command was scanned
+                var command = ParseCommand(scanData);
+
+                switch (command)
                 {
-                    // Extract the current scan data
-                    var scanData = currentScanData.ToString().Trim();
+                    case ScanCommand.In:
+                    case ScanCommand.Out:
+                        // If a person was already scanned (selected)
+                        if (currentPerson != null)
+                        {
+                            // Set up the scan in/out timeout window
+                            eventList.Set(EventList.Event.ResetCurrentPerson, ScanInOutTimeout);
 
-                    // Disable the reset scan timer and reset the incoming
-                    // scan data for the next scan
-                    eventList.Clear(EventList.Event.ResetCurrentScan);
-                    currentScanData = new StringBuilder();
-
-                    // Determine if a command was scanned
-                    var command = ParseCommand(scanData);
-
-                    switch (command)
-                    {
-                        case ScanCommand.In:
-                        case ScanCommand.Out:
-                            // If a person was already scanned (selected)
-                            if (currentPerson != null)
+                            // Check the sign-in result
+                            var result = currentPerson.SignInOrOut(command == ScanCommand.In);
+                            if (result.OperationSucceeded)
                             {
-                                // Set up the scan in/out timeout window
-                                eventList.Set(EventList.Event.ResetCurrentPerson, ScanInOutTimeout);
+                                // Increment the change count
+                                changeCount++;
 
-                                // Check the sign-in result
-                                var result = currentPerson.SignInOrOut(command == ScanCommand.In);
-                                if (result.OperationSucceeded)
-                                {
-                                    // Increment the change count
-                                    changeCount++;
+                                // Clear the scanned person 
+                                currentPerson = null;
 
-                                    // Clear the scanned person 
-                                    currentPerson = null;
+                                // Remove the timer to reset the current person
+                                eventList.Clear(EventList.Event.ResetCurrentPerson);
 
-                                    // Remove the timer to reset the current person
-                                    eventList.Clear(EventList.Event.ResetCurrentPerson);
+                                // Update the display of who's signed in
+                                model.UpdateCheckedInList(people.Values);
 
-                                    // Update the display of who's signed in
-                                    model.UpdateCheckedInList(people.Values);
-
-                                    // Save the current list
-                                    Commit();
-                                }
-
-                                // Display the result of the sign in/out operation
-                                model.ScanStatus = result.Status;
+                                // Save the current list
+                                Commit();
                             }
-                            else
-                                model.ScanStatus = "Please scan your name first";
-                            break;
 
-                        case ScanCommand.AllOutNow:
-                            SignAllOut();
-                            break;
+                            // Display the result of the sign in/out operation
+                            model.ScanStatus = result.Status;
+                        }
+                        else
+                            model.ScanStatus = "Please scan your name first";
+                        break;
 
-                        // Non-command scan, store the data in the current scan
-                        // This depends on the name pattern matching to detect
-                        // if the scan is garbage, or a person
-                        case ScanCommand.NoCommmand:
-                        default:
-                            var newPerson = Person.Create(scanData);
+                    case ScanCommand.AllOutNow:
+                        SignAllOut();
+                        break;
 
-                            // If the scan data fits the pattern of a person scan
-                            if (newPerson != null)
-                            {
-                                var name = newPerson.FullName;
+                    // Non-command scan, store the data in the current scan
+                    // This depends on the name pattern matching to detect
+                    // if the scan is garbage, or a person
+                    case ScanCommand.NoCommmand:
+                    default:
+                        var newPerson = Person.Create(scanData);
 
-                                // If the person isn't already in the dictionary, add them
-                                if (!people.ContainsKey(name))
-                                    people[name] = newPerson;
+                        // If the scan data fits the pattern of a person scan
+                        if (newPerson != null)
+                        {
+                            var name = newPerson.FullName;
 
-                                // Set the person waiting for an in or out scan
-                                currentPerson = people[name];
+                            // If the person isn't already in the dictionary, add them
+                            if (!people.ContainsKey(name))
+                                people[name] = newPerson;
 
-                                // Update the display to display the person's name
-                                model.ScanStatus = currentPerson.FirstName + ", sign in or out";
+                            // Set the person waiting for an in or out scan
+                            currentPerson = people[name];
 
-                                // Set the reset person timer
-                                eventList.Set(EventList.Event.ResetCurrentPerson, ScanInOutTimeout);
-                            }
-                            break;
-                    }
+                            // Update the display to display the person's name
+                            model.ScanStatus = currentPerson.FirstName + ", sign in or out";
+
+                            // Set the reset person timer
+                            eventList.Set(EventList.Event.ResetCurrentPerson, ScanInOutTimeout);
+                        }
+                        break;
                 }
+                //}
             }
         }
 
@@ -196,7 +196,7 @@ namespace ChopshopSignin
         {
             // Events not defined in this dictionary will result in ignoring that event
             eventHandler = new Dictionary<EventList.Event, Action>()
-            { 
+            {
                 { EventList.Event.ResetCurrentPerson, ResetCurrentPersonEventTimeout },
                 { EventList.Event.ResetCurrentScan, ResetCurrentScanEventTimeout },
                 { EventList.Event.UpdateTotalTime, UpdateTotalTimeEventTimeout },
