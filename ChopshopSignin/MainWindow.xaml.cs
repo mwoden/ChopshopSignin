@@ -23,6 +23,7 @@ namespace ChopshopSignin
     {
         private readonly ViewModel viewModel;
         private readonly SignInManager signInManger;
+        private readonly System.Timers.Timer saveTimer;
 
         private bool disposed = false;
 
@@ -58,6 +59,10 @@ namespace ChopshopSignin
             SettingsCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control | ModifierKeys.Shift));
 
             DataContext = viewModel;
+
+            LoadBackgroundImage();
+
+            saveTimer = new System.Timers.Timer(15 * 60 * 1000); // 15 minutes
         }
 
         /// <summary>
@@ -77,6 +82,15 @@ namespace ChopshopSignin
         {
             // Update the displayed lists after loading all data
             viewModel.UpdateCheckedInList(signInManger.SignedInPeople);
+
+            // Set up the save timer
+            saveTimer.Elapsed += PeriodicSave;
+            saveTimer.Enabled = true;
+        }
+
+        private void PeriodicSave(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            signInManger.Commit();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -197,6 +211,19 @@ namespace ChopshopSignin
         private void CleanCurrentFileCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             new PruneDialog(signInManger).ShowDialog();
+        }
+
+        private void LoadBackgroundImage()
+        {
+            var imageName = Properties.Settings.Default.BackgroundImage;
+            var file = System.IO.Path.Combine(Utility.OutputFolder, imageName);
+
+            if (System.IO.File.Exists(file))
+                using (var imageStream = System.IO.File.OpenRead(file))
+                {
+                    var decoder = JpegBitmapDecoder.Create(imageStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                    viewModel.Background = decoder.Frames.FirstOrDefault();
+                }
         }
     }
 }

@@ -5,6 +5,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ChopshopSignin"
+        xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
         Title="ChopShop Sign-in App"
         Width="1280" Height="1024"
                 
@@ -19,8 +20,6 @@
         Closed="Window_Closed"
         WindowState="Maximized">
     <Window.Resources>
-
-        <BitmapImage x:Key="TeamLogo" UriSource="/ChopShopLogo.jpg"/>
 
         <CollectionViewSource x:Key="CheckedInStudents" Source="{Binding Path=CheckedIn}" Filter="Student_Filter"/>
         <CollectionViewSource x:Key="CheckedInMentors" Source="{Binding Path=CheckedIn}" Filter="Mentor_Filter"/>
@@ -68,7 +67,7 @@
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
@@ -76,7 +75,7 @@
                         HorizontalAlignment="Stretch" VerticalAlignment="Center"
                         FontWeight="Bold" FontSize="72"/>
 
-            <Image Grid.Row="1" Margin="5" Source="{StaticResource ResourceKey=TeamLogo}"/>
+            <Image Grid.Row="1" Margin="5" Source="{Binding Path=Background, Mode=OneWay}"/>
 
             <TextBlock Grid.Row="2" Text="{Binding Path=ScanStatus}" TextWrapping="Wrap" TextAlignment="Center"
                        HorizontalAlignment="Stretch" VerticalAlignment="Center"                    
