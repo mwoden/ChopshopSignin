@@ -38,12 +38,12 @@ namespace ChopshopSignin.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("10")]
-        public int ScanInTimeoutWindow {
+        public int DoubleScanIgnoreTime {
             get {
-                return ((int)(this["ScanInTimeoutWindow"]));
+                return ((int)(this["DoubleScanIgnoreTime"]));
             }
             set {
-                this["ScanInTimeoutWindow"] = value;
+                this["DoubleScanIgnoreTime"] = value;
             }
         }
         

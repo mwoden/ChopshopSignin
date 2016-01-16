@@ -52,7 +52,7 @@
             <Label Grid.Row="0" Grid.Column="0">Total Time Update Interval</Label>
             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Path=TotalTimeUpdateInterval}" ToolTip='Time between "Total Time Spent" updates'/>
 
-            <Label Grid.Row="1" Grid.Column="0">Scan In Timeout Window</Label>
+            <Label Grid.Row="1" Grid.Column="0">Double Scan Ignore Window</Label>
             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Path=ScanInTimeoutWindow}" ToolTip='Number of seconds between scanning the user name and "IN" or "OUT"'/>
 
             <Label Grid.Row="2" Grid.Column="0">Scan Data Reset Time</Label>

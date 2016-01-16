@@ -34,6 +34,7 @@ namespace ChopshopSignin
         const int VideoHeight = 480;        // Depends on video device caps
         const int VideoBitsPerPixel = 24;   // BitsPerPixel values dicatated by device
 
+        public event EventHandler BarCodeScanned;
 
         private bool disposed = false;
 
@@ -88,11 +89,6 @@ namespace ChopshopSignin
             System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
         }
 
-        private void Window_TextInput(object sender, TextCompositionEventArgs e)
-        {
-            signInManger.HandleScanData(e.Text);
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Update the displayed lists after loading all data
@@ -115,14 +111,6 @@ namespace ChopshopSignin
 
         private void PeriodicCapture(object sender, System.Timers.ElapsedEventArgs e)
         {
-            //var decoded = ScanBarcode();
-
-            //if (!string.IsNullOrEmpty(decoded))
-            //    Dispatcher.Invoke(() => signInManger.HandleScanData(decoded));
-
-
-
-
             Dispatcher.Invoke(() => signInManger.HandleScanData(ScanBarcode()));
 
             // Restart the time for the next scan
@@ -269,8 +257,6 @@ namespace ChopshopSignin
 
         private string ScanBarcode()
         {
-            //string result = null;
-
             // capture image
             var rawData = camera.Click();
 
