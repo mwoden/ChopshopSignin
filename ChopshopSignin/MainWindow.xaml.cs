@@ -13,6 +13,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Collections.Concurrent;
 using System.Xml.Linq;
+using System.Runtime.InteropServices;
+using System.Drawing;
 
 namespace ChopshopSignin
 {
@@ -24,6 +26,15 @@ namespace ChopshopSignin
         private readonly ViewModel viewModel;
         private readonly SignInManager signInManger;
         private readonly System.Timers.Timer saveTimer;
+        private readonly Capture camera;
+        private readonly ZXing.BarcodeReader reader;
+        private readonly System.Timers.Timer captureTimer;
+
+        const int VideoWidth = 640;         // Depends on video device caps
+        const int VideoHeight = 480;        // Depends on video device caps
+        const int VideoBitsPerPixel = 24;   // BitsPerPixel values dicatated by device
+
+        public event EventHandler BarCodeScanned;
 
         private bool disposed = false;
 
@@ -62,7 +73,12 @@ namespace ChopshopSignin
 
             LoadBackgroundImage();
 
-            saveTimer = new System.Timers.Timer(15 * 60 * 1000); // 15 minutes
+            saveTimer = new System.Timers.Timer(15 * 60 * 1000);    // 15 minutes
+            captureTimer = new System.Timers.Timer(100);            // 0.1 second
+
+            camera = new Capture(Properties.Settings.Default.CameraDeviceNumber, VideoWidth, VideoHeight, VideoBitsPerPixel);
+            reader = new ZXing.BarcodeReader();
+            reader.Options.PossibleFormats = new[] { ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39 };
         }
 
         /// <summary>
@@ -73,11 +89,6 @@ namespace ChopshopSignin
             System.IO.File.WriteAllText("Exception.txt", e.ExceptionObject.ToString());
         }
 
-        private void Window_TextInput(object sender, TextCompositionEventArgs e)
-        {
-            signInManger.HandleScanData(e.Text);
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Update the displayed lists after loading all data
@@ -86,11 +97,24 @@ namespace ChopshopSignin
             // Set up the save timer
             saveTimer.Elapsed += PeriodicSave;
             saveTimer.Enabled = true;
+
+            // Set up camera capture timer
+            captureTimer.Elapsed += PeriodicCapture;
+            captureTimer.AutoReset = false;
+            captureTimer.Enabled = true;
         }
 
         private void PeriodicSave(object sender, System.Timers.ElapsedEventArgs e)
         {
             signInManger.Commit();
+        }
+
+        private void PeriodicCapture(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            Dispatcher.Invoke(() => signInManger.HandleScanData(ScanBarcode()));
+
+            // Restart the time for the next scan
+            captureTimer.Enabled = true;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -145,8 +169,13 @@ namespace ChopshopSignin
                 if (!disposed)
                 {
                     disposed = true;
+
+                    captureTimer.Dispose();
+                    saveTimer.Dispose();
                     viewModel.Dispose();
                     signInManger.Dispose();
+                    camera.Dispose();
+
                     GC.SuppressFinalize(this);
                 }
             }
@@ -224,6 +253,23 @@ namespace ChopshopSignin
                     var decoder = JpegBitmapDecoder.Create(imageStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
                     viewModel.Background = decoder.Frames.FirstOrDefault();
                 }
+        }
+
+        private string ScanBarcode()
+        {
+            // capture image
+            var rawData = camera.Click();
+
+            using (var bitmap = new Bitmap(camera.Width, camera.Height, camera.Stride, System.Drawing.Imaging.PixelFormat.Format24bppRgb, rawData))
+            {
+                var decodeResult = reader.Decode(bitmap);
+
+                // Release the buffer
+                if (rawData != IntPtr.Zero)
+                    Marshal.FreeCoTaskMem(rawData);
+
+                return decodeResult?.Text;
+            }
         }
     }
 }

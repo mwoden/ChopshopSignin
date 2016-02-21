@@ -73,7 +73,7 @@ namespace ChopshopSignin
             settings = currentSettings;
 
             TotalTimeUpdateInterval = settings.TotalTimeUpdateInterval;
-            ScanInTimeoutWindow = settings.ScanInTimeoutWindow;
+            ScanInTimeoutWindow = settings.DoubleScanIgnoreTime;
             ScanDataResetTime = settings.ScanDataResetTime;
             ClearScanStatusTime = settings.ClearScanStatusTime;
             MaxBackupFilesToKeep = settings.MaxBackupFilesToKeep;
@@ -130,7 +130,7 @@ namespace ChopshopSignin
             if (IsDirty)
             {
                 settings.TotalTimeUpdateInterval = TotalTimeUpdateInterval;
-                settings.ScanInTimeoutWindow = ScanInTimeoutWindow;
+                settings.DoubleScanIgnoreTime = ScanInTimeoutWindow;
                 settings.ScanDataResetTime = ScanDataResetTime;
                 settings.ClearScanStatusTime = ClearScanStatusTime;
                 settings.MaxBackupFilesToKeep = MaxBackupFilesToKeep;
