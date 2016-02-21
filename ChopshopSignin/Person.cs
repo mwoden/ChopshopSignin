@@ -30,6 +30,8 @@ namespace ChopshopSignin
             }
         }
 
+        public bool IsSignedIn { get { return CurrentLocation == Scan.LocationType.In; } }
+
         /// <summary>
         /// Returns the most recent time in for the current day
         /// </summary>
@@ -116,9 +118,31 @@ namespace ChopshopSignin
             return FullName.GetHashCode();
         }
 
+        public static bool operator ==(Person a, Person b)
+        {
+            if (object.ReferenceEquals(a, null))
+                return object.ReferenceEquals(a, b);
+
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(Person a, Person b)
+        {
+            return !(a == b);
+        }
+
         public override string ToString()
         {
             return string.Format("{0} : {1} : {2}", FullName, Role.ToString(), CurrentLocation.ToString());
+        }
+
+        /// <summary>
+        /// Toggle the person in or out
+        /// </summary>
+        /// <returns></returns>
+        public SignInOutResult Toggle()
+        {
+            return SignInOrOut(!IsSignedIn);
         }
 
         /// <summary>
@@ -367,7 +391,7 @@ namespace ChopshopSignin
         /// <summary>
         /// Contains the week defintion, by FIRST season standards
         /// </summary>
-        public static readonly DayOfWeek[] FirstWeek = new[] 
+        public static readonly DayOfWeek[] FirstWeek = new[]
         {
             DayOfWeek.Saturday,
             DayOfWeek.Sunday,
