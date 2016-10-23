@@ -1,18 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Collections.Concurrent;
-using System.Xml.Linq;
 using System.Runtime.InteropServices;
 using System.Drawing;
 
@@ -33,8 +24,6 @@ namespace ChopshopSignin
         const int VideoWidth = 640;         // Depends on video device caps
         const int VideoHeight = 480;        // Depends on video device caps
         const int VideoBitsPerPixel = 24;   // BitsPerPixel values dicatated by device
-
-        public event EventHandler BarCodeScanned;
 
         private bool disposed = false;
 

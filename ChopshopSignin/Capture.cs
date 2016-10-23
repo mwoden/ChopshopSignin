@@ -167,9 +167,6 @@ namespace ChopshopSignin
                 hr = m_FilterGraph.AddSourceFilterForMoniker(dev.Mon, null, dev.Name, out capFilter);
                 DsError.ThrowExceptionForHR(hr);
 
-                // Find the still pin
-                m_pinStill = DsFindPin.ByCategory(capFilter, PinCategory.Still, 0);
-
                 // Didn't find one.  Is there a preview pin?
                 if (m_pinStill == null)
                 {
