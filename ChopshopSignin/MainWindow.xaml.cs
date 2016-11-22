@@ -122,7 +122,6 @@ namespace ChopshopSignin
                 if (result != MessageBoxResult.Yes)
                     e.Cancel = true;
             }
-
         }
 
         private void Window_Closed(object sender, EventArgs e)

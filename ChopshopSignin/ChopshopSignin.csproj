@@ -81,6 +81,7 @@
     <Compile Include="BarcodeReader.cs" />
     <Compile Include="Capture.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="ObservableObject.cs" />
     <Compile Include="PruneDialog.xaml.cs">
       <DependentUpon>PruneDialog.xaml</DependentUpon>
     </Compile>
@@ -97,7 +98,6 @@
     <Compile Include="SignInPair.cs" />
     <Compile Include="SummaryFile.cs" />
     <Compile Include="ViewModel.cs" />
-    <Compile Include="ViewModelBase.cs" />
     <Page Include="PruneDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -150,9 +150,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="timeclock-icon.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="ChopShopLogo.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
