@@ -30,22 +30,8 @@ namespace ChopshopSignin
                 // So don't generate a default out for today's date
                 if (((DateTime)In).Date < DateTime.Today)
                 {
-                    // Except Sat & Sun, default out time is 9 PM
-                    switch (timeStamps.First().ScanTime.DayOfWeek)
-                    {
-                        case DayOfWeek.Saturday:
-                        case DayOfWeek.Sunday:
-                            Out = ((DateTime)In).Date.AddHours(18);
-                            break;
-
-                        case DayOfWeek.Monday:
-                        case DayOfWeek.Tuesday:
-                        case DayOfWeek.Wednesday:
-                        case DayOfWeek.Thursday:
-                        case DayOfWeek.Friday:
-                            Out = ((DateTime)In).Date.AddHours(21);
-                            break;
-                    }
+                    // The time will be the same as the in time, so if they didn't sign out they get no time
+                    Out = timeStamps.First().ScanTime;
                 }
             }
         }

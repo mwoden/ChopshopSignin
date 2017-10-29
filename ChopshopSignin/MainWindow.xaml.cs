@@ -27,7 +27,6 @@ namespace ChopshopSignin
 
         private bool disposed = false;
 
-        public static RoutedCommand SignOutAllCommand = new RoutedCommand("Sign Everyone Out", typeof(MainWindow));
         public static RoutedCommand CreateSummaryCommand = new RoutedCommand("Create Summary Data Files", typeof(MainWindow));
         public static RoutedCommand CleanCurrentFileCommand = new RoutedCommand("Clean Current File", typeof(MainWindow));
         public static RoutedCommand ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
@@ -53,7 +52,6 @@ namespace ChopshopSignin
             ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
 
             // Add the shortcut keys for the various commands
-            SignOutAllCommand.InputGestures.Add(new KeyGesture(Key.O, ModifierKeys.Control | ModifierKeys.Shift));
             CreateSummaryCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control));
             ExitCommand.InputGestures.Add(new KeyGesture(Key.W, ModifierKeys.Control));
             SettingsCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control | ModifierKeys.Shift));

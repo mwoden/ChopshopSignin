@@ -30,9 +30,6 @@
     </Window.Resources>
 
     <Window.CommandBindings>
-        <CommandBinding Command="{x:Static local:MainWindow.SignOutAllCommand}"
-                        Executed="SignOutAllCommand_Executed"
-                        CanExecute="SignOutAllCommand_CanExecute"/>
         <CommandBinding Command="{x:Static local:MainWindow.CreateSummaryCommand}"
                         Executed="CreateSummaryCommand_Executed"/>
         <CommandBinding Command="{x:Static local:MainWindow.ExitCommand}"
@@ -46,7 +43,6 @@
 
     <Window.ContextMenu>
         <ContextMenu>
-            <MenuItem Command="{x:Static local:MainWindow.SignOutAllCommand}" Header="{Binding Source={x:Static local:MainWindow.SignOutAllCommand}, Path=Name}"/>
             <MenuItem Command="{x:Static local:MainWindow.CreateSummaryCommand}" Header="{Binding Source={x:Static local:MainWindow.CreateSummaryCommand}, Path=Name}"/>
             <Separator/>
             <MenuItem Command="{x:Static local:MainWindow.CleanCurrentFileCommand}" Header="{Binding Source={x:Static local:MainWindow.CleanCurrentFileCommand}, Path=Name}"/>
