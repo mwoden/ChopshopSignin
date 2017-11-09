@@ -41,7 +41,6 @@ namespace ChopshopSignin
             viewModel = new ViewModel();
 
             signInManger = new SignInManager(viewModel, Utility.DataFile);
-            signInManger.AllOutConfirmation += ConfirmAllOutCommand;
 
             // Set the window icon to the 
             Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(Properties.Settings.Default.WindowIconPath, UriKind.Relative)).Stream);
@@ -104,43 +103,10 @@ namespace ChopshopSignin
             captureTimer.Enabled = true;
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            if (signInManger.AnySignedIn)
-            {
-                string message = "There are still people signed in!" + Environment.NewLine +
-                    "Leaving people signed in overnight can case problems" + Environment.NewLine +
-                    Environment.NewLine +
-                    "Sign everyone out before quitting" + Environment.NewLine +
-                    Environment.NewLine +
-                    "Proceed anyway?";
-
-                var result = MessageBox.Show(message, "People still signed in", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-
-                if (result != MessageBoxResult.Yes)
-                    e.Cancel = true;
-            }
-        }
-
         private void Window_Closed(object sender, EventArgs e)
         {
             signInManger.Commit();
             Dispose();
-        }
-
-        /// <summary>
-        /// Display a dialog to prevent accidentally signing everyone out 
-        /// </summary>
-        /// <returns>True if the user clicked Yes, False otherwise</returns>
-        private bool ConfirmAllOutCommand()
-        {
-            var message = "You are about to sign out all currently signed-in people" + Environment.NewLine +
-                          "Please select 'Yes' to sign everyone out";
-
-            var result = MessageBox.Show(message, "Confirm signing all out", MessageBoxButton.YesNo,
-                                            MessageBoxImage.Warning, MessageBoxResult.No);
-
-            return result == MessageBoxResult.Yes;
         }
 
         public void Dispose()
