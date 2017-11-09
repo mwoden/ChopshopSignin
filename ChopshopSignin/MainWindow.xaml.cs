@@ -176,7 +176,7 @@ namespace ChopshopSignin
 
         private void ExitCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = !signInManger.AnySignedIn;
+            e.CanExecute = true;
         }
 
         private void ExitCommand_Executed(object sender, ExecutedRoutedEventArgs e)
