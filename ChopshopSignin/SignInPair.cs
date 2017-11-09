@@ -56,14 +56,14 @@ namespace ChopshopSignin
 
         /// <summary>
         /// Get the total time that the pair represents
-        /// If there is no Out time, the current time will be used
+        /// If there is no Out time, the total time will be zero
         /// </summary>
         public TimeSpan TotalTime()
         {
-            if (In == null)
+            if (In == null || Out == null)
                 return TimeSpan.Zero;
 
-            return (Out ?? DateTime.Now) - (DateTime)In;
+            return (DateTime)Out - (DateTime)In;
         }
 
         public static IDictionary<DayOfWeek, SignInPair[]> GetWeekInOutPairs(IEnumerable<Scan> timeStamps)
@@ -83,7 +83,7 @@ namespace ChopshopSignin
                                                                                  .ToArray());
         }
 
-        public static readonly DayOfWeek[] FirstWeek = new[] 
+        public static readonly DayOfWeek[] FirstWeek = new[]
         {
             DayOfWeek.Saturday,
             DayOfWeek.Sunday,
