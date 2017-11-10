@@ -9,7 +9,7 @@ using System.Windows.Media.Imaging;
 
 namespace ChopshopSignin
 {
-    sealed internal class ViewModel : ViewModelBase
+    sealed internal class ViewModel : ObservableObject
     {
         /// <summary>
         /// The scan status text to display
@@ -43,7 +43,7 @@ namespace ChopshopSignin
         public int StudentsSignedIn
         {
             get { lock (syncObject) { return m_StudentsSignedIn; } }
-            set { lock (syncObject) { m_StudentsSignedIn = value; FirePropertyChanged(); } }
+            set { lock (syncObject) { SetField(ref m_StudentsSignedIn, value); } }
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace ChopshopSignin
         public int MentorsSignedIn
         {
             get { lock (syncObject) { return m_MentorsSignedIn; } }
-            set { lock (syncObject) { m_MentorsSignedIn = value; FirePropertyChanged(); } }
+            set { lock (syncObject) { SetField(ref m_MentorsSignedIn, value); } }
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace ChopshopSignin
         public ObservableCollection<Person> CheckedIn
         {
             get { return m_CheckedIn; }
-            set { m_CheckedIn = value; FirePropertyChanged(); }
+            set { SetField(ref m_CheckedIn, value); }
         }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace ChopshopSignin
         public string TimeUntilShip
         {
             get { return m_TimeUntilShip; }
-            set { m_TimeUntilShip = value; FirePropertyChanged(); }
+            set { SetField(ref m_TimeUntilShip, value); }
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace ChopshopSignin
         public BitmapSource Background
         {
             get { return _background; }
-            set { _background = value; FirePropertyChanged(); }
+            set { SetField(ref _background, value); }
         }
 
         /// <summary>

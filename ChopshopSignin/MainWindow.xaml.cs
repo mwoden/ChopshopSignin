@@ -1,18 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Collections.Concurrent;
-using System.Xml.Linq;
 using System.Runtime.InteropServices;
 using System.Drawing;
 
@@ -34,11 +25,8 @@ namespace ChopshopSignin
         const int VideoHeight = 480;        // Depends on video device caps
         const int VideoBitsPerPixel = 24;   // BitsPerPixel values dicatated by device
 
-        public event EventHandler BarCodeScanned;
-
         private bool disposed = false;
 
-        public static RoutedCommand SignOutAllCommand = new RoutedCommand("Sign Everyone Out", typeof(MainWindow));
         public static RoutedCommand CreateSummaryCommand = new RoutedCommand("Create Summary Data Files", typeof(MainWindow));
         public static RoutedCommand CleanCurrentFileCommand = new RoutedCommand("Clean Current File", typeof(MainWindow));
         public static RoutedCommand ExitCommand = new RoutedCommand("Exit", typeof(MainWindow));
@@ -53,7 +41,6 @@ namespace ChopshopSignin
             viewModel = new ViewModel();
 
             signInManger = new SignInManager(viewModel, Utility.DataFile);
-            signInManger.AllOutConfirmation += ConfirmAllOutCommand;
 
             // Set the window icon to the 
             Icon = BitmapFrame.Create(Application.GetResourceStream(new Uri(Properties.Settings.Default.WindowIconPath, UriKind.Relative)).Stream);
@@ -64,7 +51,6 @@ namespace ChopshopSignin
             ((CollectionViewSource)FindResource("CheckedInMentors")).SortDescriptions.Add(sortDesc);
 
             // Add the shortcut keys for the various commands
-            SignOutAllCommand.InputGestures.Add(new KeyGesture(Key.O, ModifierKeys.Control | ModifierKeys.Shift));
             CreateSummaryCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control));
             ExitCommand.InputGestures.Add(new KeyGesture(Key.W, ModifierKeys.Control));
             SettingsCommand.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control | ModifierKeys.Shift));
@@ -117,44 +103,10 @@ namespace ChopshopSignin
             captureTimer.Enabled = true;
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            if (signInManger.AnySignedIn)
-            {
-                string message = "There are still people signed in!" + Environment.NewLine +
-                    "Leaving people signed in overnight can case problems" + Environment.NewLine +
-                    Environment.NewLine +
-                    "Sign everyone out before quitting" + Environment.NewLine +
-                    Environment.NewLine +
-                    "Proceed anyway?";
-
-                var result = MessageBox.Show(message, "People still signed in", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-
-                if (result != MessageBoxResult.Yes)
-                    e.Cancel = true;
-            }
-
-        }
-
         private void Window_Closed(object sender, EventArgs e)
         {
             signInManger.Commit();
             Dispose();
-        }
-
-        /// <summary>
-        /// Display a dialog to prevent accidentally signing everyone out 
-        /// </summary>
-        /// <returns>True if the user clicked Yes, False otherwise</returns>
-        private bool ConfirmAllOutCommand()
-        {
-            var message = "You are about to sign out all currently signed-in people" + Environment.NewLine +
-                          "Please select 'Yes' to sign everyone out";
-
-            var result = MessageBox.Show(message, "Confirm signing all out", MessageBoxButton.YesNo,
-                                            MessageBoxImage.Warning, MessageBoxResult.No);
-
-            return result == MessageBoxResult.Yes;
         }
 
         public void Dispose()
@@ -224,7 +176,7 @@ namespace ChopshopSignin
 
         private void ExitCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = !signInManger.AnySignedIn;
+            e.CanExecute = true;
         }
 
         private void ExitCommand_Executed(object sender, ExecutedRoutedEventArgs e)

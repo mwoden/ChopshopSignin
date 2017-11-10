@@ -30,22 +30,8 @@ namespace ChopshopSignin
                 // So don't generate a default out for today's date
                 if (((DateTime)In).Date < DateTime.Today)
                 {
-                    // Except Sat & Sun, default out time is 9 PM
-                    switch (timeStamps.First().ScanTime.DayOfWeek)
-                    {
-                        case DayOfWeek.Saturday:
-                        case DayOfWeek.Sunday:
-                            Out = ((DateTime)In).Date.AddHours(18);
-                            break;
-
-                        case DayOfWeek.Monday:
-                        case DayOfWeek.Tuesday:
-                        case DayOfWeek.Wednesday:
-                        case DayOfWeek.Thursday:
-                        case DayOfWeek.Friday:
-                            Out = ((DateTime)In).Date.AddHours(21);
-                            break;
-                    }
+                    // The time will be the same as the in time, so if they didn't sign out they get no time
+                    Out = timeStamps.First().ScanTime;
                 }
             }
         }
@@ -70,14 +56,14 @@ namespace ChopshopSignin
 
         /// <summary>
         /// Get the total time that the pair represents
-        /// If there is no Out time, the current time will be used
+        /// If there is no Out time, the total time will be zero
         /// </summary>
         public TimeSpan TotalTime()
         {
-            if (In == null)
+            if (In == null || Out == null)
                 return TimeSpan.Zero;
 
-            return (Out ?? DateTime.Now) - (DateTime)In;
+            return (DateTime)Out - (DateTime)In;
         }
 
         public static IDictionary<DayOfWeek, SignInPair[]> GetWeekInOutPairs(IEnumerable<Scan> timeStamps)
@@ -97,7 +83,7 @@ namespace ChopshopSignin
                                                                                  .ToArray());
         }
 
-        public static readonly DayOfWeek[] FirstWeek = new[] 
+        public static readonly DayOfWeek[] FirstWeek = new[]
         {
             DayOfWeek.Saturday,
             DayOfWeek.Sunday,

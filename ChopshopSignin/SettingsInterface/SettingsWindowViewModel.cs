@@ -6,66 +6,66 @@ using System.ComponentModel;
 
 namespace ChopshopSignin
 {
-    class SettingsWindowViewModel : ViewModelBase
+    class SettingsWindowViewModel : ObservableObject
     {
         public int TotalTimeUpdateInterval
         {
             get { return m_TotalTimeUpdateInterval; }
-            set { m_TotalTimeUpdateInterval = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_TotalTimeUpdateInterval, value); }
         }
 
         public int ScanInTimeoutWindow
         {
             get { return m_ScanInTimeoutWindow; }
-            set { m_ScanInTimeoutWindow = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_ScanInTimeoutWindow, value); }
         }
 
         public int ScanDataResetTime
         {
             get { return m_ScanDataResetTime; }
-            set { m_ScanDataResetTime = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_ScanDataResetTime, value); }
         }
 
         public int ClearScanStatusTime
         {
             get { return m_ClearScanStatusTime; }
-            set { m_ClearScanStatusTime = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_ClearScanStatusTime, value); }
         }
 
         public int MaxBackupFilesToKeep
         {
             get { return m_MaxBackupFilesToKeep; }
-            set { m_MaxBackupFilesToKeep = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_MaxBackupFilesToKeep, value); }
         }
 
         public bool ShowTimeUntilShip
         {
             get { return m_ShowTimeUntilShip; }
-            set { m_ShowTimeUntilShip = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_ShowTimeUntilShip, value); }
         }
 
         public DateTime Kickoff
         {
             get { return m_Kickoff; }
-            set { m_Kickoff = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_Kickoff, value); }
         }
 
         public DateTime Ship
         {
             get { return m_Ship; }
-            set { m_Ship = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_Ship, value); }
         }
 
         public DateTime TimeSince
         {
             get { return m_TimeSince; }
-            set { m_TimeSince = value; FirePropertyChanged(); IsDirty = true; }
+            set { SetField(ref m_TimeSince, value); }
         }
 
         public bool IsDirty
         {
             get { return m_IsDirty; }
-            private set { m_IsDirty = value; FirePropertyChanged(); }
+            private set { SetField(ref m_IsDirty, value); }
         }
 
         public SettingsWindowViewModel(Properties.Settings currentSettings)
@@ -97,9 +97,15 @@ namespace ChopshopSignin
             IsDirty = false;
 
             Properties.Settings.Default.SettingChanging += SettingChanging;
+            Dirty += SettingsDirty;
         }
 
-        void SettingChanging(object sender, System.Configuration.SettingChangingEventArgs e)
+        private void SettingsDirty()
+        {
+            IsDirty = true;
+        }
+
+        private void SettingChanging(object sender, System.Configuration.SettingChangingEventArgs e)
         {
             var settings = (Properties.Settings)sender;
 

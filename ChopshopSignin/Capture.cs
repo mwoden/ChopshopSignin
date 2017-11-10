@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace ChopshopSignin
 {
     /// <summary> Summary description for MainForm. </summary>
-    internal class Capture : ISampleGrabberCB, IDisposable
+    internal sealed class Capture : ISampleGrabberCB, IDisposable
     {
         #region Member variables
 
@@ -23,7 +23,7 @@ namespace ChopshopSignin
         private IPin m_pinStill = null;
 
         /// <summary> so we can wait for the async job to finish </summary>
-        private ManualResetEvent m_PictureReady = null;
+        private readonly ManualResetEvent m_PictureReady = new ManualResetEvent(false);
 
         private bool m_WantOne = false;
 
@@ -35,10 +35,8 @@ namespace ChopshopSignin
         /// <summary> buffer for bitmap data.  Always release by caller</summary>
         private IntPtr m_ipBuffer = IntPtr.Zero;
 
-#if DEBUG
         // Allow you to "Connect to remote graph" from GraphEdit
         DsROTEntry m_rot = null;
-#endif
         #endregion
 
         #region APIs
@@ -49,23 +47,16 @@ namespace ChopshopSignin
         // Zero based device index and device params and output window
         public Capture(int iDeviceNum, int iWidth, int iHeight, short iBPP)
         {
-            DsDevice[] capDevices;
-
             // Get the collection of video devices
-            capDevices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
+            var capDevices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
 
             if (iDeviceNum + 1 > capDevices.Length)
-            {
                 throw new Exception("No video capture devices found at that index!");
-            }
 
             try
             {
                 // Set up the capture graph
                 SetupGraph(capDevices[iDeviceNum], iWidth, iHeight, iBPP);
-
-                // tell the callback to ignore new images
-                m_PictureReady = new ManualResetEvent(false);
             }
             catch
             {
@@ -77,22 +68,28 @@ namespace ChopshopSignin
         /// <summary> release everything. </summary>
         public void Dispose()
         {
-#if DEBUG
-            if (m_rot != null)
-            {
-                m_rot.Dispose();
-            }
-#endif
-            CloseInterfaces();
-            if (m_PictureReady != null)
-            {
-                m_PictureReady.Close();
-            }
+            Dispose(true);
         }
-        // Destructor
+
+        private void Dispose(bool isDisposing)
+        {
+            if (isDisposing)
+            {
+                if (m_rot != null)
+                    m_rot.Dispose();
+
+                m_PictureReady.Dispose();
+            }
+
+            CloseInterfaces();
+
+            GC.SuppressFinalize(this);
+        }
+
+        // Finalizer
         ~Capture()
         {
-            Dispose();
+            Dispose(false);
         }
 
         /// <summary>
@@ -104,29 +101,24 @@ namespace ChopshopSignin
         /// <returns>Returned pointer to be freed by caller with Marshal.FreeCoTaskMem</returns>
         public IntPtr Click()
         {
-            int hr;
-
             // get ready to wait for new image
             m_PictureReady.Reset();
             m_ipBuffer = Marshal.AllocCoTaskMem(Math.Abs(m_stride) * m_videoHeight);
+            m_WantOne = true;
 
             try
             {
-                m_WantOne = true;
-
                 // If we are using a still pin, ask for a picture
                 if (m_VidControl != null)
                 {
                     // Tell the camera to send an image
-                    hr = m_VidControl.SetMode(m_pinStill, VideoControlFlags.Trigger);
+                    var hr = m_VidControl.SetMode(m_pinStill, VideoControlFlags.Trigger);
                     DsError.ThrowExceptionForHR(hr);
                 }
 
                 // Start waiting
                 if (!m_PictureReady.WaitOne(9000, false))
-                {
                     throw new Exception("Timeout waiting to get picture");
-                }
             }
             catch
             {
@@ -147,8 +139,6 @@ namespace ChopshopSignin
         /// <summary> build the capture graph for grabber. </summary>
         private void SetupGraph(DsDevice dev, int iWidth, int iHeight, short iBPP)
         {
-            int hr;
-
             ISampleGrabber sampGrabber = null;
             IBaseFilter capFilter = null;
             IPin pCaptureOut = null;
@@ -164,17 +154,12 @@ namespace ChopshopSignin
                 m_rot = new DsROTEntry(m_FilterGraph);
 #endif
                 // add the video input device
-                hr = m_FilterGraph.AddSourceFilterForMoniker(dev.Mon, null, dev.Name, out capFilter);
+                var hr = m_FilterGraph.AddSourceFilterForMoniker(dev.Mon, null, dev.Name, out capFilter);
                 DsError.ThrowExceptionForHR(hr);
-
-                // Find the still pin
-                m_pinStill = DsFindPin.ByCategory(capFilter, PinCategory.Still, 0);
 
                 // Didn't find one.  Is there a preview pin?
                 if (m_pinStill == null)
-                {
                     m_pinStill = DsFindPin.ByCategory(capFilter, PinCategory.Preview, 0);
-                }
 
                 // Still haven't found one.  Need to put a splitter in so we have
                 // one stream to capture the bitmap from, and one to display.  Ok, we
@@ -188,7 +173,7 @@ namespace ChopshopSignin
                     m_VidControl = null;
 
                     // Add a splitter
-                    IBaseFilter iSmartTee = (IBaseFilter)new SmartTee();
+                    var iSmartTee = (IBaseFilter)new SmartTee();
 
                     try
                     {
@@ -217,17 +202,13 @@ namespace ChopshopSignin
                     finally
                     {
                         if (pRaw != null)
-                        {
                             Marshal.ReleaseComObject(pRaw);
-                        }
+
                         if (pRaw != pSmart)
-                        {
                             Marshal.ReleaseComObject(pSmart);
-                        }
+
                         if (pRaw != iSmartTee)
-                        {
                             Marshal.ReleaseComObject(iSmartTee);
-                        }
                     }
                 }
                 else
@@ -245,15 +226,15 @@ namespace ChopshopSignin
                 }
 
                 // Get the SampleGrabber interface
-                sampGrabber = new SampleGrabber() as ISampleGrabber;
+                sampGrabber = (ISampleGrabber)new SampleGrabber();
 
                 // Configure the sample grabber
-                IBaseFilter baseGrabFlt = sampGrabber as IBaseFilter;
+                IBaseFilter baseGrabFlt = (IBaseFilter)sampGrabber;
                 ConfigureSampleGrabber(sampGrabber);
                 pSampleIn = DsFindPin.ByDirection(baseGrabFlt, PinDirection.Input, 0);
 
                 // Get the default video renderer
-                IBaseFilter pRenderer = new VideoRendererDefault() as IBaseFilter;
+                var pRenderer = (IBaseFilter)new VideoRendererDefault();
                 hr = m_FilterGraph.AddFilter(pRenderer, "Renderer");
                 DsError.ThrowExceptionForHR(hr);
 
@@ -288,43 +269,32 @@ namespace ChopshopSignin
                 SaveSizeInfo(sampGrabber);
 
                 // Start the graph
-                IMediaControl mediaCtrl = m_FilterGraph as IMediaControl;
+                var mediaCtrl = (IMediaControl)m_FilterGraph;
                 hr = mediaCtrl.Run();
                 DsError.ThrowExceptionForHR(hr);
             }
             finally
             {
                 if (sampGrabber != null)
-                {
                     Marshal.ReleaseComObject(sampGrabber);
-                    sampGrabber = null;
-                }
+
                 if (pCaptureOut != null)
-                {
                     Marshal.ReleaseComObject(pCaptureOut);
-                    pCaptureOut = null;
-                }
+
                 if (pRenderIn != null)
-                {
                     Marshal.ReleaseComObject(pRenderIn);
-                    pRenderIn = null;
-                }
+
                 if (pSampleIn != null)
-                {
                     Marshal.ReleaseComObject(pSampleIn);
-                    pSampleIn = null;
-                }
             }
         }
 
         private void SaveSizeInfo(ISampleGrabber sampGrabber)
         {
-            int hr;
-
             // Get the media type from the SampleGrabber
-            AMMediaType media = new AMMediaType();
+            var media = new AMMediaType();
 
-            hr = sampGrabber.GetConnectedMediaType(media);
+            var hr = sampGrabber.GetConnectedMediaType(media);
             DsError.ThrowExceptionForHR(hr);
 
             if ((media.formatType != FormatType.VideoInfo) || (media.formatPtr == IntPtr.Zero))
@@ -333,29 +303,26 @@ namespace ChopshopSignin
             }
 
             // Grab the size info
-            VideoInfoHeader videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(media.formatPtr, typeof(VideoInfoHeader));
+            var videoInfoHeader = (VideoInfoHeader)Marshal.PtrToStructure(media.formatPtr, typeof(VideoInfoHeader));
             m_videoWidth = videoInfoHeader.BmiHeader.Width;
             m_videoHeight = videoInfoHeader.BmiHeader.Height;
             m_stride = m_videoWidth * (videoInfoHeader.BmiHeader.BitCount / 8);
 
             DsUtils.FreeAMMediaType(media);
-            media = null;
         }
 
         private void ConfigureSampleGrabber(ISampleGrabber sampGrabber)
         {
-            int hr;
-            AMMediaType media = new AMMediaType();
+            var media = new AMMediaType();
 
             // Set the media type to Video/RBG24
             media.majorType = MediaType.Video;
             media.subType = MediaSubType.RGB24;
             media.formatType = FormatType.VideoInfo;
-            hr = sampGrabber.SetMediaType(media);
+            var hr = sampGrabber.SetMediaType(media);
             DsError.ThrowExceptionForHR(hr);
 
             DsUtils.FreeAMMediaType(media);
-            media = null;
 
             // Configure the samplegrabber
             hr = sampGrabber.SetCallback(this, 1);
@@ -365,39 +332,31 @@ namespace ChopshopSignin
         // Set the Framerate, and video size
         private void SetConfigParms(IPin pStill, int iWidth, int iHeight, short iBPP)
         {
-            int hr;
-            AMMediaType media;
-            VideoInfoHeader v;
-
-            IAMStreamConfig videoStreamConfig = pStill as IAMStreamConfig;
-
-            // Get the existing format block
-            hr = videoStreamConfig.GetFormat(out media);
-            DsError.ThrowExceptionForHR(hr);
+            AMMediaType media = null;
 
             try
             {
+                var videoStreamConfig = (IAMStreamConfig)pStill;
+
+                // Get the existing format block
+                var hr = videoStreamConfig.GetFormat(out media);
+                DsError.ThrowExceptionForHR(hr);
+
                 // copy out the videoinfoheader
-                v = new VideoInfoHeader();
+                var v = new VideoInfoHeader();
                 Marshal.PtrToStructure(media.formatPtr, v);
 
                 // if overriding the width, set the width
                 if (iWidth > 0)
-                {
                     v.BmiHeader.Width = iWidth;
-                }
 
                 // if overriding the Height, set the Height
                 if (iHeight > 0)
-                {
                     v.BmiHeader.Height = iHeight;
-                }
 
                 // if overriding the bits per pixel
                 if (iBPP > 0)
-                {
                     v.BmiHeader.BitCount = iBPP;
-                }
 
                 // Copy the media structure back
                 Marshal.StructureToPtr(v, media.formatPtr, false);
@@ -408,25 +367,19 @@ namespace ChopshopSignin
             }
             finally
             {
-                DsUtils.FreeAMMediaType(media);
-                media = null;
+                if (media != null)
+                    DsUtils.FreeAMMediaType(media);
             }
         }
 
         /// <summary> Shut down capture </summary>
         private void CloseInterfaces()
         {
-            int hr;
-
             try
             {
                 if (m_FilterGraph != null)
-                {
-                    IMediaControl mediaCtrl = m_FilterGraph as IMediaControl;
-
                     // Stop the graph
-                    hr = mediaCtrl.Stop();
-                }
+                    ((IMediaControl)m_FilterGraph).Stop();
             }
             catch (Exception ex)
             {
@@ -434,22 +387,13 @@ namespace ChopshopSignin
             }
 
             if (m_FilterGraph != null)
-            {
                 Marshal.ReleaseComObject(m_FilterGraph);
-                m_FilterGraph = null;
-            }
 
             if (m_VidControl != null)
-            {
                 Marshal.ReleaseComObject(m_VidControl);
-                m_VidControl = null;
-            }
 
             if (m_pinStill != null)
-            {
                 Marshal.ReleaseComObject(m_pinStill);
-                m_pinStill = null;
-            }
         }
 
         /// <summary> sample callback, NOT USED. </summary>
@@ -462,7 +406,7 @@ namespace ChopshopSignin
         /// <summary> buffer callback, COULD BE FROM FOREIGN THREAD. </summary>
         int ISampleGrabberCB.BufferCB(double SampleTime, IntPtr pBuffer, int BufferLen)
         {
-            // Note that we depend on only being called once per call to Click.  Otherwise
+            // Note that we depend on only being called once per call to Click. Otherwise
             // a second call can overwrite the previous image.
             Debug.Assert(BufferLen == Math.Abs(m_stride) * m_videoHeight, "Incorrect buffer length");
 
