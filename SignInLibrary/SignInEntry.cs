@@ -28,6 +28,9 @@ namespace SignInLibrary
         /// </summary>
         public TimeSpan Duration => Out - In;
 
+        public bool IsIn => !_isPartialEntry;
+        public bool IsOut => !IsIn;
+
         public SignInEntry(DateTime inTime, DateTime? outTime = null)
         {
             In = inTime;
@@ -54,7 +57,7 @@ namespace SignInLibrary
             return $"{In.ToShortTimeString()} - {Out.ToShortTimeString()} ({Duration})";
         }
 
-        public XElement GetXml()
+        public XElement ToXml()
         {
             var entry = new XElement("SignInEntry", new XAttribute("in", In));
 
