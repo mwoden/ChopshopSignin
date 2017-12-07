@@ -21,24 +21,6 @@ namespace SignInLibrary
         public bool IsSignedIn => GetLatestTodayEntry()?.IsIn ?? false;
         public bool IsSignedOut => !IsSignedIn;
 
-
-        ///// <summary>
-        ///// Returns the most recent location from today's timestamps
-        ///// </summary>
-        //public Scan.LocationType CurrentLocation
-        //{
-        //    get
-        //    {
-        //        var today = Timestamps.Where(x => x.ScanTime.Date == DateTime.Today);
-        //        if (today.Count() == 0)
-        //            return Scan.LocationType.Out;
-
-        //        return today.Last().Direction;
-        //    }
-        //}
-
-        
-
         /// <summary>
         /// Returns the most recent time in for the current day
         /// </summary>
@@ -73,29 +55,31 @@ namespace SignInLibrary
 
             Role = result;
 
-            Entries = personXml.Element("Scans")
-                               .Elements()
+            var scans = personXml.Element("Scans");
+
+            if (scans != null && !scans.IsEmpty)
+                Entries = scans.Elements()
                                .Select(x => new SignInEntry(x))
                                .OrderBy(x => x.In)
                                .ToList();
         }
 
-        //public static Person Create(string scanData)
-        //{
-        //    if (string.IsNullOrWhiteSpace(scanData) || !scanData.Contains(','))
-        //        return null;
+        public static Person Create(string scanData)
+        {
+            if (string.IsNullOrWhiteSpace(scanData) || !scanData.Contains(','))
+                return null;
 
-        //    RoleType role = Person.RoleType.Student;
+            var role = Person.RoleType.Student;
 
-        //    // Check for a mentor scan
-        //    if (IsMentor(scanData))
-        //    {
-        //        role = Person.RoleType.Mentor;
-        //        scanData = GetMentorName(scanData);
-        //    }
+            // Check for a mentor scan
+            if (IsMentor(scanData))
+            {
+                role = Person.RoleType.Mentor;
+                scanData = GetMentorName(scanData);
+            }
 
-        //    return new Person(scanData.Split(',').First(), scanData.Split(',').Last(), role);
-        //}
+            return new Person(scanData.Split(',').First(), scanData.Split(',').Last(), role);
+        }
 
         public bool Equals(Person other)
         {
